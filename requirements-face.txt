@@ -1,0 +1,8 @@
+-r requirements.txt
+# Keep OpenCV packages on the same stable 4.x release. Avoid OpenCV 5.x with this prototype's legacy MediaPipe FaceMesh path.
+deepface>=0.0.93
+opencv-python==4.11.0.86
+opencv-contrib-python==4.11.0.86
+mediapipe==0.10.35
+# DeepFace with TensorFlow 2.21 requires the matching Keras compatibility package.
+tf-keras==2.21.0

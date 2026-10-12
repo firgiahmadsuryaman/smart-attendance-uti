@@ -1,0 +1,43 @@
+SMART ATTENDANCE — UNIVERSITAS TEKNOKRAT INDONESIA
+
+MULAI DI WINDOWS:
+1. Install Python 3.10.
+2. Extract ZIP ke folder sederhana, misalnya C:\Projects\smart_attendance.
+3. Buka CMD di folder itu, lalu jalankan:
+   py -3.10 -m venv .venv
+   .venv\Scripts\activate
+   python -m pip install --upgrade pip
+   pip install -r requirements.txt
+   copy .env.example .env
+4. Edit .env: ganti SECRET_KEY. Periksa DATABASE_URL bila menggunakan MySQL. APP_BASE_URL dipakai untuk URL QR jika ingin ditetapkan secara eksplisit.
+5. Siapkan database:
+   python -m flask --app run.py init-db
+   python -m flask --app run.py seed-demo
+   python -m flask --app run.py create-admin
+6. Jalankan aplikasi:
+   python run.py
+7. Buka http://127.0.0.1:5000.
+
+Untuk Face Recognition & challenge kamera:
+   pip install -r requirements-face.txt
+
+FITUR UTAMA:
+- Admin: program studi, semester, katalog, kelas/jadwal multi-slot, peserta, laporan dan log.
+- Dosen: input mata kuliah/kelas, jadwal mengajar, QR/token presensi, statistik, ekspor PDF/Excel.
+- Mahasiswa: registrasi, pendaftaran wajah setelah login, pengajuan kelas, jadwal otomatis, unduh PDF/Excel, presensi dan rekap.
+
+CATATAN KAMERA/QR:
+- QR memuat URL aplikasi. Jangan gunakan 127.0.0.1 pada QR untuk dibuka di ponsel.
+- Kamera browser pada perangkat selain localhost umumnya memerlukan HTTPS.
+- Challenge kedip/gerak kepala bersifat dasar, bukan anti-spoofing produksi.
+- Data biometrik adalah data sensitif; gunakan persetujuan dan kebijakan retensi yang sesuai.
+
+Baca README.md untuk detail setup, MySQL port 3307, migrasi database, dan alur pengujian.
+
+PENDAFTARAN WAJAH OTOMATIS
+- Buka menu Daftarkan Wajah dan klik "Mulai Perekaman Otomatis" satu kali.
+- Ikuti instruksi pada layar: hadap ke depan, kedip, tengok kiri, tengok kanan.
+- Sampel ditangkap otomatis; tidak perlu menekan tombol foto pada setiap tahap.
+- Saat presensi, klik "Mulai Verifikasi Otomatis" lalu hadap kamera dan kedip sekali.
+- Browser memuat MediaPipe Face Mesh dari CDN, sehingga perlu akses internet.
+- Backend tetap melakukan validasi ulang. Challenge dasar tidak menjamin anti-spoofing sempurna.

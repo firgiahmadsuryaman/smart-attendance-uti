@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="welcome-panel"><div><span class="welcome-label">PUSAT KENDALI ADMINISTRASI</span><h2>Selamat datang, {{ current_user.full_name.split(' ')[0] }}.</h2><p>Pantau data akademik, penawaran kelas, pengambilan mata kuliah, dan aktivitas presensi dari satu tempat.</p></div><div class="welcome-illustration"><i class="bi bi-buildings"></i></div><div class="welcome-decoration"></div></section>
+<div class="stat-grid">
+  <div class="stat-card"><div class="stat-top"><span class="stat-label">Mahasiswa</span><span class="stat-icon"><i class="bi bi-people"></i></span></div><div class="stat-value">{{ counts.students }}</div><div class="stat-note">Akun mahasiswa terdaftar</div></div>
+  <div class="stat-card"><div class="stat-top"><span class="stat-label">Dosen</span><span class="stat-icon green"><i class="bi bi-person-badge"></i></span></div><div class="stat-value">{{ counts.lecturers }}</div><div class="stat-note">Akun dosen terdaftar</div></div>
+  <div class="stat-card"><div class="stat-top"><span class="stat-label">Penawaran kelas</span><span class="stat-icon orange"><i class="bi bi-calendar-week"></i></span></div><div class="stat-value">{{ counts.offerings }}</div><div class="stat-note">Kelas dari seluruh semester</div></div>
+  <div class="stat-card"><div class="stat-top"><span class="stat-label">Pengajuan KRS menunggu</span><span class="stat-icon red"><i class="bi bi-person-check"></i></span></div><div class="stat-value">{{ counts.pending }}</div><div class="stat-note">Perlu ditinjau Admin</div></div>
+</div>
+<div class="content-grid">
+  <section class="panel"><div class="panel-header"><div><h3>Kelola sistem</h3><p>Akses cepat ke data yang paling sering digunakan.</p></div></div><div class="panel-body"><div class="row g-3">
+    <div class="col-sm-6"><a class="soft-card d-block h-100" href="{{ url_for('admin.offerings') }}"><div class="mini-icon mb-3"><i class="bi bi-calendar2-week"></i></div><h4>Kelas & Jadwal</h4><p>Buka penawaran kelas dan tentukan dosen, hari, jam, serta ruangan.</p></a></div>
+    <div class="col-sm-6"><a class="soft-card d-block h-100" href="{{ url_for('admin.enrollments') }}"><div class="mini-icon mb-3"><i class="bi bi-person-check"></i></div><h4>Pengambilan Mata Kuliah</h4><p>Tinjau pengajuan dan tentukan mahasiswa yang berhak mengikuti kelas.</p></a></div>
+    <div class="col-sm-6"><a class="soft-card d-block h-100" href="{{ url_for('admin.semesters') }}"><div class="mini-icon mb-3"><i class="bi bi-calendar3"></i></div><h4>Semester Akademik</h4><p>Atur semester aktif dan periode pemilihan mata kuliah.</p></a></div>
+    <div class="col-sm-6"><a class="soft-card d-block h-100" href="{{ url_for('admin.reports') }}"><div class="mini-icon mb-3"><i class="bi bi-clipboard-data"></i></div><h4>Rekap Presensi</h4><p>Pantau catatan kehadiran dan unduh rekap sistem.</p></a></div>
+  </div></div></section>
+  <section class="panel"><div class="panel-header"><div><h3>Aktivitas terbaru</h3><p>Perubahan penting yang tercatat di sistem.</p></div><a class="subtle-link" href="{{ url_for('admin.logs') }}">Lihat semua</a></div><div class="panel-body">
+    {% for item in recent_logs %}<div class="mini-card"><span class="mini-icon"><i class="bi bi-activity"></i></span><div class="mini-copy"><strong>{{ item.action|replace('_',' ')|title }}</strong><small>{{ item.details or 'Tidak ada detail tambahan' }}</small></div><div class="mini-end">{{ item.created_at.strftime('%d %b') }}<br>{{ item.created_at.strftime('%H:%M') }}</div></div>{% else %}<div class="empty-state py-4 border-0"><div class="empty-icon"><i class="bi bi-journal-text"></i></div><h2>Belum ada aktivitas</h2><p>Aktivitas akan muncul saat pengguna mulai menggunakan sistem.</p></div>{% endfor %}
+  </div></section>
+</div>
+<div class="callout mt-4"><i class="bi bi-info-circle"></i><div><strong>{{ counts.face }} mahasiswa</strong> telah memiliki Face Profile. Status ini hanya menunjukkan pendaftaran wajah, bukan jaminan bahwa setiap presensi akan berhasil diverifikasi.</div></div>
+{% endblock %}

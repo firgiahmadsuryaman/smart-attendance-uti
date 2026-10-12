@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-intro">
+  <div><span class="eyebrow">MANAJEMEN AKADEMIK</span><h2>Kelas & Jadwal Perkuliahan</h2><p>Kelola informasi seperti daftar akademik: kode, mata kuliah, dosen, kelas, W/P, SKS, moda perkuliahan, frekuensi, hari, jam, dan ruang.</p></div>
+  <div class="page-intro-actions"><span class="status-pill info"><i class="bi bi-calendar2-week me-1"></i>{{ offerings|length }} penawaran kelas</span></div>
+</div>
+
+<section class="panel mb-4">
+  <div class="panel-header"><div><h3>Daftar penawaran kelas</h3><p>Informasi kelas tersusun lengkap dan dapat diedit kapan saja.</p></div></div>
+  <div class="table-wrap"><table class="table align-middle"><thead><tr><th>No</th><th>Kode</th><th>Mata Kuliah</th><th>Nama Dosen</th><th>Kelas</th><th>W/P</th><th>SKS</th><th>Moda / Frekuensi</th><th>Jadwal / Ruang</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
+  {% for o in offerings %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td><span class="primary-text">{{ o.course.code }}</span><span class="secondary-text">{{ o.course.program.code }}</span></td>
+      <td><span class="primary-text">{{ o.course.name }}</span><span class="secondary-text">{{ o.course.program.name }} · Semester {{ o.course.recommended_semester or '-' }}</span></td>
+      <td><span class="primary-text">{{ o.lecturer.full_name }}</span><span class="secondary-text">{{ o.lecturer.employee_id or 'Dosen pengampu' }}</span></td>
+      <td><span class="primary-text">{{ o.class_code }}</span><span class="secondary-text">{{ o.semester.name }}</span></td>
+      <td><span class="tag {{ 'required' if o.course.course_type == 'W' else 'elective' }}">{{ o.course.course_type }}</span></td>
+      <td>{{ o.course.credits }}</td>
+      <td><span class="badge-mode {{ 'online' if o.delivery_mode == 'ONLINE' else 'offline' }}">{{ o.delivery_mode_label }}</span><span class="secondary-text">{{ o.schedules|length }} pertemuan/minggu</span></td>
+      <td>{% for slot in o.schedules %}<span class="primary-text">{{ slot.weekday_name }} · {{ slot.start_time.strftime('%H:%M') }}–{{ slot.end_time.strftime('%H:%M') }}</span><span class="secondary-text">{{ slot.room }}</span>{% endfor %}{% if o.online_url %}<a class="secondary-text d-block" href="{{ o.online_url }}" target="_blank" rel="noopener">Buka tautan online</a>{% endif %}</td>
+      <td><span class="status-pill {{ 'success' if o.status == 'OPEN' else 'neutral' }}">{{ 'Dibuka' if o.status == 'OPEN' else 'Ditutup' }}</span></td>
+      <td><div class="btn-actions"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_offering', offering_id=o.id) }}">Edit</a><form method="post" action="{{ url_for('admin.toggle_offering', offering_id=o.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-light">{{ 'Tutup' if o.status == 'OPEN' else 'Buka' }}</button></form></div></td>
+    </tr>
+  {% else %}<tr><td colspan="11" class="text-center py-5 muted">Belum ada kelas yang dibuat. Isi formulir untuk membuka penawaran pertama.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+
+<div class="content-grid">
+  <section class="panel"><div class="panel-header"><div><h3>Buat penawaran kelas</h3><p>Formulir menggabungkan data mata kuliah, dosen, kelas, SKS/W-P dari katalog, dan jadwal.</p></div></div>
+    <div class="panel-body form-panel">
+      <form method="post" id="offeringForm"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3"><label class="form-label" for="courseEntryMode">Sumber data mata kuliah</label><select class="form-select" name="course_entry_mode" id="courseEntryMode"><option value="catalog">Pilih dari katalog mata kuliah</option><option value="new">Input mata kuliah baru sekaligus kelas</option></select><div class="form-text">Pilih katalog agar kode mata kuliah tidak ganda. Jika belum tersedia, gunakan input baru.</div></div>
+        <div id="catalogCourseSection">
+          <div class="field-grid mb-3"><div><label class="form-label" for="programFilter">Filter program studi</label><select class="form-select" id="programFilter"><option value="">Semua program studi</option>{% for p in programs %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></div><div><label class="form-label" for="catalogSemesterFilter">Filter semester kurikulum</label><select class="form-select" id="catalogSemesterFilter"><option value="">Semua semester</option>{% for sem in semester_options %}<option value="{{ sem }}">Semester {{ sem }}</option>{% endfor %}</select></div></div>
+          <label class="form-label" for="courseSearch">Cari kode atau nama mata kuliah</label><input class="form-control mb-2" id="courseSearch" placeholder="Contoh: UTI 105 / Aplikasi Komputer">
+          <label class="form-label" for="courseSelect">Mata kuliah katalog</label><select class="form-select mb-3" id="courseSelect" name="course_id"><option value="">Pilih mata kuliah</option>{% for c in courses %}<option value="{{ c.id }}" data-program="{{ c.program_id }}" data-semester="{{ c.recommended_semester or '' }}">{{ c.code }} — {{ c.name }} · {{ c.program.name }} · {{ c.course_type }}/{{ c.credits }} SKS · Semester {{ c.recommended_semester or '-' }}</option>{% endfor %}</select>
+        </div>
+        <div id="newCourseSection" class="d-none">
+          <div class="callout mb-3"><i class="bi bi-info-circle"></i><div>Kode unik akan ditambahkan ke katalog mata kuliah. Jika kode sudah ada, pilih data dari katalog agar tidak membuat duplikasi.</div></div>
+          <div class="field-grid mb-3"><div><label class="form-label">Kode mata kuliah</label><input class="form-control new-course-field" name="new_course_code" placeholder="UTI 105"></div><div><label class="form-label">Nama mata kuliah</label><input class="form-control new-course-field" name="new_course_name" placeholder="Aplikasi Komputer"></div>
+            <div><label class="form-label">Program studi</label><select class="form-select new-course-field" name="new_program_id"><option value="">Pilih program studi</option>{% for p in programs %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></div>
+            <div><label class="form-label">Semester kurikulum</label><select class="form-select new-course-field" name="new_recommended_semester"><option value="">Pilih semester</option>{% for sem in semester_options %}<option value="{{ sem }}">Semester {{ sem }}</option>{% endfor %}</select></div>
+            <div><label class="form-label">Jenis W/P</label><select class="form-select new-course-field" name="new_course_type"><option value="W">W — Wajib</option><option value="P">P — Pilihan</option></select></div>
+            <div><label class="form-label">SKS</label><input class="form-control new-course-field" name="new_credits" type="number" min="1" max="6" value="2"></div>
+          </div><div class="mb-3"><label class="form-label">Deskripsi (opsional)</label><textarea class="form-control" name="new_description" rows="2" placeholder="Deskripsi singkat mata kuliah"></textarea></div>
+        </div>
+
+        <div class="form-section-title"><i class="bi bi-calendar2-check"></i>Informasi penawaran kelas</div>
+        <div class="field-grid mb-3"><div><label class="form-label">Semester akademik</label><select class="form-select" name="semester_id" required><option value="">Pilih semester</option>{% for s in semesters %}<option value="{{ s.id }}" {% if s.is_active %}selected{% endif %}>{{ s.name }}{% if s.is_active %} · Aktif{% endif %}</option>{% endfor %}</select></div><div><label class="form-label">Kode kelas</label><input class="form-control" name="class_code" placeholder="IF26A - GEL 1" required></div><div><label class="form-label">Dosen pengampu</label><select class="form-select" name="lecturer_id" required><option value="">Pilih dosen</option>{% for l in lecturers %}<option value="{{ l.id }}">{{ l.full_name }}{% if l.employee_id %} · {{ l.employee_id }}{% endif %}</option>{% endfor %}</select></div><div><label class="form-label">Kapasitas peserta</label><input class="form-control" type="number" name="capacity" min="1" max="500" value="40" required></div></div>
+        <div class="field-grid mb-3"><div><label class="form-label" for="deliveryMode">Moda perkuliahan</label><select class="form-select" name="delivery_mode" id="deliveryMode"><option value="OFFLINE">Tatap muka</option><option value="ONLINE">Online</option></select></div><div><label class="form-label" for="onlineUrl">Tautan online (opsional)</label><input class="form-control" name="online_url" id="onlineUrl" type="url" placeholder="https://meet.google.com/..." disabled></div></div>
+        <div class="mode-note mb-3" id="modeNote">Tatap muka membutuhkan ruang. Setiap jadwal dapat menggunakan ruang yang berbeda.</div>
+        <div class="form-section-title"><i class="bi bi-calendar-week"></i>Jadwal mingguan</div>
+        <div class="slot-list" id="slotList"><div class="slot-row"><div><label>Hari</label><select class="form-select" name="weekday[]" required>{% for value,label in weekdays %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div><div><label>Jam mulai</label><input class="form-control" type="time" name="start_time[]" required></div><div><label>Jam selesai</label><input class="form-control" type="time" name="end_time[]" required></div><div class="room-field"><label>Ruang</label><input class="form-control" name="room[]" placeholder="B3.1"></div><button class="slot-remove" type="button" title="Hapus jadwal" disabled><i class="bi bi-trash"></i></button></div></div>
+        <button class="slot-add mt-2 mb-4" id="addSlot" type="button"><i class="bi bi-plus-circle me-1"></i>Tambah pertemuan mingguan</button>
+        <button class="btn btn-primary w-100"><i class="bi bi-check2-circle me-1"></i>Simpan penawaran kelas</button>
+      </form>
+    </div>
+  </section>
+  <aside class="panel"><div class="panel-body"><div class="form-section-title mt-0"><i class="bi bi-lightbulb"></i>Panduan pengisian</div>
+    <div class="soft-card mb-3"><h4>Mata kuliah katalog</h4><p>Gunakan data yang telah ada supaya kode, nama, program studi, W/P, SKS, dan semester kurikulum konsisten.</p></div>
+    <div class="soft-card mb-3"><h4>Wajib dan pilihan</h4><p>Kolom W/P berasal dari katalog. W berarti wajib dan P berarti pilihan.</p></div>
+    <div class="soft-card mb-3"><h4>Satu atau dua pertemuan</h4><p>Gunakan tombol tambah jadwal untuk kelas yang bertemu lebih dari sekali dalam seminggu.</p></div>
+    <div class="soft-card"><h4>Kuliah online</h4><p>Pilih moda online, tambahkan tautan meeting, dan sistem tidak mewajibkan ruang fisik.</p></div>
+  </div></aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const entry = document.getElementById('courseEntryMode');
+  const catalog = document.getElementById('catalogCourseSection');
+  const fresh = document.getElementById('newCourseSection');
+  const course = document.getElementById('courseSelect');
+  const program = document.getElementById('programFilter');
+  const semester = document.getElementById('catalogSemesterFilter');
+  const search = document.getElementById('courseSearch');
+  const mode = document.getElementById('deliveryMode');
+  const online = document.getElementById('onlineUrl');
+  const note = document.getElementById('modeNote');
+  const list = document.getElementById('slotList');
+  const add = document.getElementById('addSlot');
+  function swapEntry() {
+    const isNew = entry.value === 'new';
+    catalog.classList.toggle('d-none', isNew);
+    fresh.classList.toggle('d-none', !isNew);
+    course.required = !isNew;
+    fresh.querySelectorAll('.new-course-field').forEach((field) => {
+      field.disabled = !isNew;
+      field.required = isNew;
+    });
+  }
+  function filterCourses() {
+    const p = program.value, sem = semester.value, q = search.value.toLowerCase();
+    [...course.options].forEach((option, index) => {
+      if (index === 0) return;
+      const visible = (!p || option.dataset.program === p) && (!sem || option.dataset.semester === sem) && option.text.toLowerCase().includes(q);
+      option.hidden = !visible;
+    });
+    if (course.selectedOptions[0]?.hidden) course.value = '';
+  }
+  function updateMode() {
+    const isOnline = mode.value === 'ONLINE';
+    online.disabled = !isOnline;
+    document.querySelectorAll('#slotList .room-field input').forEach((field) => {
+      field.disabled = isOnline; field.required = !isOnline;
+      if (isOnline) field.value = 'Online'; else if (field.value === 'Online') field.value = '';
+    });
+    note.classList.toggle('online', isOnline);
+    note.textContent = isOnline ? 'Kuliah online tidak memerlukan ruang fisik. Masukkan URL meeting bila tersedia.' : 'Kuliah tatap muka membutuhkan ruang fisik untuk setiap slot.';
+  }
+  entry.addEventListener('change', swapEntry);
+  program.addEventListener('change', filterCourses); semester.addEventListener('change', filterCourses); search.addEventListener('input', filterCourses); mode.addEventListener('change', updateMode);
+  add.addEventListener('click', () => {
+    if (list.children.length >= 4) { alert('Maksimal empat slot jadwal per minggu.'); return; }
+    const row = list.firstElementChild.cloneNode(true);
+    row.querySelectorAll('input').forEach((field) => field.value = '');
+    row.querySelectorAll('select').forEach((field) => field.selectedIndex = 0);
+    row.querySelector('.slot-remove').disabled = false;
+    list.appendChild(row); updateMode();
+  });
+  list.addEventListener('click', (event) => { const button = event.target.closest('.slot-remove'); if (button && list.children.length > 1) button.closest('.slot-row').remove(); });
+  swapEntry(); updateMode();
+})();
+</script>
+{% endblock %}

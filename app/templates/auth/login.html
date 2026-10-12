@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block auth_content %}
+<div class="auth-page">
+  <section class="auth-hero" style="--campus-image: url('{{ url_for('static', filename='images/foto-kampus.jpg') }}')">
+    <div class="auth-brand"><img class="auth-logo" src="{{ url_for('static', filename='images/logo-teknokrat.png') }}" alt="Logo Universitas Teknokrat Indonesia"><div><strong>UNIVERSITAS TEKNOKRAT INDONESIA</strong><small>SMART ATTENDANCE PORTAL</small></div></div>
+    <div class="auth-hero-copy"><span class="hero-kicker">PRESENSI DIGITAL TERINTEGRASI</span><h1>Hadir lebih mudah.<br><em>Belajar lebih terarah.</em></h1><p>Kelola jadwal perkuliahan, lakukan presensi wajah, dan pantau kehadiran dalam satu portal akademik yang terintegrasi.</p>
+      <div class="hero-features"><div><span><i class="bi bi-person-bounding-box"></i></span><p><strong>Verifikasi wajah</strong><small>Presensi dengan identitas terverifikasi</small></p></div><div><span><i class="bi bi-calendar2-week"></i></span><p><strong>Jadwal terpusat</strong><small>Informasi kelas dan jadwal otomatis</small></p></div><div><span><i class="bi bi-graph-up-arrow"></i></span><p><strong>Rekap transparan</strong><small>Riwayat kehadiran lebih mudah dipantau</small></p></div></div>
+    </div>
+    <div class="auth-hero-footer"><span class="red-line"></span><span>Teknologi untuk pengalaman akademik yang lebih baik.</span></div>
+    <div class="hero-decoration hero-decoration-one"></div><div class="hero-decoration hero-decoration-two"></div>
+  </section>
+  <section class="auth-panel"><div class="auth-form-wrap"><div class="mobile-auth-brand"><img class="mobile-brand-logo" src="{{ url_for('static', filename='images/logo-teknokrat.png') }}" alt="Logo Teknokrat"><strong>TEKNOKRAT</strong></div>
+    <span class="form-kicker">SELAMAT DATANG KEMBALI</span><h2>Masuk ke akun Anda</h2><p class="muted-intro">Gunakan akun terdaftar untuk melanjutkan ke portal presensi.</p>
+    <form method="post" class="auth-form" novalidate>
+      <input type="hidden" name="next" value="{{ next_url or request.args.get('next', '') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="email">Email</label><div class="input-icon-wrap"><i class="bi bi-envelope"></i><input id="email" name="email" type="email" autocomplete="username" placeholder="nama@teknokrat.ac.id" value="{{ request.form.get('email','') }}" required></div>
+      <div class="label-row"><label for="password">Password</label></div><div class="input-icon-wrap"><i class="bi bi-lock"></i><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Masukkan password" required><button type="button" class="toggle-password" data-target="password" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button></div>
+      <label class="check-row"><input type="checkbox" name="remember"> <span>Ingat saya di perangkat ini</span></label>
+      <button class="btn btn-primary btn-lg w-100 auth-submit" type="submit">Masuk <i class="bi bi-arrow-right"></i></button>
+    </form>
+    <div class="auth-divider"><span>AKSES PORTAL AKADEMIK</span></div>
+    <p class="auth-switch">Belum memiliki akun mahasiswa? <a href="{{ url_for('auth.register') }}">Daftar sekarang</a></p>
+    <div class="auth-security"><i class="bi bi-shield-check"></i><span>Gunakan akun pribadi Anda. Jangan membagikan password kepada siapa pun.</span></div>
+  </div><div class="auth-panel-footer">© {{ current_year }} Universitas Teknokrat Indonesia</div></section>
+</div>
+{% endblock %}

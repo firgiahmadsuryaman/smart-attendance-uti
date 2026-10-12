@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-intro">
+  <div>
+    <span class="eyebrow">PORTAL AKADEMIK</span>
+    <h2>Mata Kuliah Saya</h2>
+    <p>Cari penawaran kelas sesuai program studi dan semester yang dibutuhkan. Jadwal resmi akan muncul setelah pengambilan kelas disetujui.</p>
+  </div>
+  <div class="page-intro-actions">
+    {% if active_semester %}<span class="status-pill info"><i class="bi bi-calendar3"></i> {{ active_semester.name }}</span>{% endif %}
+    <a class="btn btn-outline-primary" href="{{ url_for('student.schedule') }}"><i class="bi bi-calendar-week me-1"></i>Jadwal Saya</a>
+  </div>
+</div>
+
+{% if not active_semester %}
+  <div class="callout warning mb-3"><i class="bi bi-exclamation-circle"></i><div>Belum ada semester aktif. Hubungi Admin agar semester dan penawaran kelas disiapkan.</div></div>
+{% elif not active_semester.enrollment_open %}
+  <div class="callout warning mb-3"><i class="bi bi-lock"></i><div>Periode pengambilan mata kuliah sedang ditutup. Anda tetap dapat melihat penawaran, tetapi tidak dapat mengajukan kelas baru.</div></div>
+{% endif %}
+
+<section class="panel mb-4">
+  <div class="panel-header">
+    <div><h3>Temukan mata kuliah</h3><p>Daftar disaring berdasarkan program studi akun Anda dan semester akademik aktif.</p></div>
+    <span class="status-pill neutral">{{ offerings|length }} kelas ditemukan</span>
+  </div>
+  <div class="panel-body">
+    <form method="get" class="course-search-grid">
+      <div>
+        <label class="form-label" for="studentProgram">Program studi</label>
+        <select class="form-select" id="studentProgram" disabled>
+          {% for program in programs %}<option value="{{ program.id }}" {% if current_user.program_id == program.id %}selected{% endif %}>{{ program.name }}</option>{% endfor %}
+        </select>
+        <small class="text-muted">Sesuai program studi pada profil Anda.</small>
+      </div>
+      <div>
+        <label class="form-label" for="recommendedSemester">Semester kurikulum</label>
+        <select class="form-select" name="recommended_semester" id="recommendedSemester">
+          <option value="">Semua semester</option>
+          {% for sem in semester_options %}<option value="{{ sem }}" {% if selected_recommended_semester == sem %}selected{% endif %}>Semester {{ sem }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label" for="courseType">Jenis mata kuliah</label>
+        <select class="form-select" name="course_type" id="courseType">
+          <option value="">Wajib & pilihan</option>
+          <option value="W" {% if selected_type == 'W' %}selected{% endif %}>W — Wajib</option>
+          <option value="P" {% if selected_type == 'P' %}selected{% endif %}>P — Pilihan</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label" for="deliveryMode">Metode kuliah</label>
+        <select class="form-select" name="delivery_mode" id="deliveryMode">
+          <option value="">Online & tatap muka</option>
+          <option value="OFFLINE" {% if selected_mode == 'OFFLINE' %}selected{% endif %}>Tatap muka</option>
+          <option value="ONLINE" {% if selected_mode == 'ONLINE' %}selected{% endif %}>Online</option>
+        </select>
+      </div>
+      <div class="course-search-keyword">
+        <label class="form-label" for="courseSearch">Cari mata kuliah, kode, kelas, atau dosen</label>
+        <div class="input-group"><span class="input-group-text"><i class="bi bi-search"></i></span><input class="form-control" id="courseSearch" name="q" value="{{ search }}" placeholder="Contoh: UTI 105, Aplikasi Komputer, IF26A"></div>
+      </div>
+      <div class="course-search-actions"><button class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Terapkan filter</button><a class="btn btn-light" href="{{ url_for('student.courses') }}">Reset</a></div>
+    </form>
+  </div>
+</section>
+
+<section class="panel mb-4">
+  <div class="panel-header"><div><h3>Penawaran kelas tersedia</h3><p>Periksa kelas, dosen, jadwal, moda perkuliahan, dan kapasitas sebelum mengajukan.</p></div></div>
+  <div class="table-wrap">
+    <table class="table align-middle">
+      <thead><tr><th>Mata kuliah</th><th>Kelas / SKS</th><th>Dosen</th><th>Jadwal mingguan</th><th>Mode</th><th>Peserta</th><th>Pengajuan</th></tr></thead>
+      <tbody>
+      {% for o in offerings %}
+        {% set enrol = enrollment_map.get(o.id) %}
+        <tr>
+          <td><span class="primary-text">{{ o.course.name }}</span><span class="secondary-text">{{ o.course.code }} · Semester {{ o.course.recommended_semester or '-' }} · {{ o.semester.name }}</span><span class="secondary-text">{{ o.course.program.name }} · {{ 'Wajib' if o.course.course_type == 'W' else 'Pilihan' }}</span></td>
+          <td>{{ o.class_code }}<span class="secondary-text">{{ o.course.credits }} SKS</span></td>
+          <td><span class="primary-text">{{ o.lecturer.full_name }}</span><span class="secondary-text">{{ o.lecturer.employee_id or 'Dosen pengampu' }}</span></td>
+          <td>{% for slot in o.schedules %}<div class="schedule-compact-line"><strong>{{ slot.weekday_name }}</strong><span>{{ slot.start_time.strftime('%H:%M') }}–{{ slot.end_time.strftime('%H:%M') }}</span><small>{{ slot.room }}</small></div>{% else %}<span class="muted">Jadwal belum tersedia</span>{% endfor %}</td>
+          <td><span class="status-pill {{ 'info' if o.delivery_mode == 'ONLINE' else 'neutral' }}">{{ 'Online' if o.delivery_mode == 'ONLINE' else 'Tatap muka' }}</span>{% if o.delivery_mode == 'ONLINE' and o.online_url %}<a class="secondary-text d-block" href="{{ o.online_url }}" target="_blank" rel="noopener">Tautan kelas</a>{% endif %}</td>
+          <td>{{ o.enrollments|selectattr('status','equalto','APPROVED')|list|length }}/{{ o.capacity }}<span class="secondary-text">peserta disetujui</span></td>
+          <td>
+            {% if enrol %}
+              <span class="status-pill {{ 'success' if enrol.status=='APPROVED' else ('warning' if enrol.status=='PENDING' else 'danger') }}">{{ {'APPROVED':'Disetujui','PENDING':'Menunggu','REJECTED':'Ditolak'}.get(enrol.status,enrol.status) }}</span>
+              {% if enrol.review_note %}<span class="secondary-text">{{ enrol.review_note }}</span>{% endif %}
+            {% elif active_semester and active_semester.enrollment_open %}
+              <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="offering_id" value="{{ o.id }}"><button class="btn btn-sm btn-primary"><i class="bi bi-plus-lg me-1"></i>Ajukan kelas</button></form>
+            {% else %}<span class="muted">Periode ditutup</span>{% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7"><div class="empty-state py-5"><div class="empty-icon"><i class="bi bi-journal-x"></i></div><h2>Tidak ada kelas yang cocok</h2><p>Coba ubah filter semester atau kata kunci, atau hubungi Admin jika penawaran kelas belum tersedia.</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h3>Riwayat pengajuan saya</h3><p>Status setiap permohonan pengambilan mata kuliah.</p></div></div>
+  <div class="table-wrap"><table class="table align-middle"><thead><tr><th>Mata kuliah</th><th>Kelas</th><th>Semester akademik</th><th>Status</th><th>Catatan Admin</th></tr></thead><tbody>
+    {% for e in enrollments %}<tr><td><span class="primary-text">{{ e.offering.course.name }}</span><span class="secondary-text">{{ e.offering.course.code }}</span></td><td>{{ e.offering.class_code }}</td><td>{{ e.offering.semester.name }}</td><td><span class="status-pill {{ 'success' if e.status=='APPROVED' else ('warning' if e.status=='PENDING' else 'danger') }}">{{ {'APPROVED':'Disetujui','PENDING':'Menunggu','REJECTED':'Ditolak'}.get(e.status,e.status) }}</span></td><td>{{ e.review_note or '-' }}</td></tr>
+    {% else %}<tr><td colspan="5" class="text-center py-4 muted">Anda belum mengajukan mata kuliah.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

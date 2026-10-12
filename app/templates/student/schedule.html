@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-intro">
+  <div><span class="eyebrow">AKADEMIK · SEMESTER AKTIF</span><h2>Jadwal Mata Kuliah</h2><p>Jadwal terbentuk otomatis dari kelas yang disetujui. Jika Admin atau dosen memperbarui slot jadwal, halaman ini mengikuti data terbaru.</p></div>
+  <div class="page-intro-actions"><a class="btn btn-outline-primary" href="{{ url_for('student.download_schedule_pdf') }}"><i class="bi bi-file-earmark-pdf me-1"></i>Unduh PDF</a><a class="btn btn-primary" href="{{ url_for('student.download_schedule_xlsx') }}"><i class="bi bi-file-earmark-excel me-1"></i>Unduh Excel</a></div>
+</div>
+
+<div class="panel mb-4"><div class="panel-body"><div class="d-flex flex-wrap justify-content-between align-items-center gap-3"><div><div class="text-uppercase fw-bold muted" style="font-size:9px;letter-spacing:.12em">SEMESTER AKTIF</div><h3 class="mt-2 mb-1" style="font-size:18px;color:var(--navy);font-weight:800">{{ active_semester.name if active_semester else 'Belum ada semester aktif' }}</h3><div class="muted" style="font-size:11px">{{ current_user.program.name if current_user.program else 'Program studi belum ditetapkan' }} · NPM {{ current_user.npm }}</div></div><div class="d-flex gap-3"><div class="info-tile"><small>Mata kuliah</small><strong>{{ course_count }}</strong></div><div class="info-tile"><small>Total SKS</small><strong>{{ total_credits }}</strong></div><div class="info-tile"><small>Slot mingguan</small><strong>{{ schedule_rows|length }}</strong></div></div></div></div></div>
+
+<div class="panel"><div class="panel-header"><div><h3>Jadwal mingguan</h3><p>Urut berdasarkan hari dan waktu; kelas online ditandai secara khusus.</p></div><span class="status-pill info">{{ schedule_rows|length }} slot jadwal</span></div><div class="panel-body">
+{% if schedule_rows %}
+  {% set ns = namespace(day=-1) %}
+  {% for offering,slot in schedule_rows %}
+    {% if slot.weekday != ns.day %}
+      {% if not loop.first %}</div>{% endif %}
+      <div class="schedule-day"><h4>{{ slot.weekday_name }}</h4>{% set ns.day = slot.weekday %}
+    {% endif %}
+    <div class="schedule-item">
+      <div class="schedule-time">{{ slot.start_time.strftime('%H:%M') }}–{{ slot.end_time.strftime('%H:%M') }}<small>{{ offering.class_code }} · {{ offering.course.credits }} SKS</small></div>
+      <div class="schedule-main"><strong>{{ offering.course.name }}</strong><small>{{ offering.course.code }} · {{ offering.course.program.name }} · Semester kurikulum {{ offering.course.recommended_semester or '-' }}</small><small>{{ offering.lecturer.full_name }} · {{ offering.course.course_type }} ({{ 'Wajib' if offering.course.course_type == 'W' else 'Pilihan' }})</small></div>
+      <div class="schedule-room"><span class="badge-mode {{ 'online' if offering.delivery_mode == 'ONLINE' else 'offline' }}">{{ offering.delivery_mode_label }}</span><small>{{ slot.room }}</small>{% if offering.online_url %}<a href="{{ offering.online_url }}" target="_blank" rel="noopener" class="secondary-text">Buka tautan</a>{% endif %}</div>
+    </div>
+    {% if loop.last %}</div>{% endif %}
+  {% endfor %}
+{% else %}
+  <div class="empty-state"><div class="empty-icon"><i class="bi bi-calendar-week"></i></div><h2>Belum ada jadwal kuliah</h2><p>Jadwal akan muncul setelah Anda memilih mata kuliah dan pengajuan disetujui Admin.</p><a class="btn btn-primary" href="{{ url_for('student.courses') }}">Pilih mata kuliah</a></div>
+{% endif %}
+</div></div>
+
+{% if schedule_rows %}<div class="callout mt-3"><i class="bi bi-download"></i><div><strong>Simpan jadwal untuk digunakan offline.</strong> PDF cocok untuk dicetak atau dibagikan, sedangkan Excel dapat digunakan untuk mengurutkan dan mencari jadwal.</div></div>{% endif %}
+{% endblock %}

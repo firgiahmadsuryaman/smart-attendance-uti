@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{{ page_title or 'Smart Attendance' }} · Teknokrat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/app.css') }}" rel="stylesheet">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% if current_user.is_authenticated %}app-body{% else %}auth-body{% endif %}">
+{% if current_user.is_authenticated %}
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="{{ url_for('main.index') }}">
+      <img class="brand-logo" src="{{ url_for('static', filename='images/logo-teknokrat.png') }}" alt="Logo Universitas Teknokrat Indonesia">
+      <span class="brand-copy"><strong>TEKNOKRAT</strong><small>SMART ATTENDANCE</small></span>
+    </a>
+    <div class="sidebar-label">MENU UTAMA</div>
+    <nav class="side-nav">
+      {% if current_user.role == 'admin' %}
+        <a class="side-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
+        <div class="side-section">DATA AKADEMIK</div>
+        <a class="side-link {% if request.endpoint == 'admin.students' %}active{% endif %}" href="{{ url_for('admin.students') }}"><i class="bi bi-people"></i><span>Mahasiswa</span></a>
+        <a class="side-link {% if request.endpoint == 'admin.lecturers' %}active{% endif %}" href="{{ url_for('admin.lecturers') }}"><i class="bi bi-person-badge"></i><span>Dosen</span></a>
+        <a class="side-link {% if request.endpoint == 'admin.programs' %}active{% endif %}" href="{{ url_for('admin.programs') }}"><i class="bi bi-diagram-3"></i><span>Program Studi</span></a>
+        <a class="side-link {% if request.endpoint == 'admin.semesters' %}active{% endif %}" href="{{ url_for('admin.semesters') }}"><i class="bi bi-calendar3"></i><span>Semester</span></a>
+        <a class="side-link {% if request.endpoint == 'admin.courses' %}active{% endif %}" href="{{ url_for('admin.courses') }}"><i class="bi bi-journal-bookmark"></i><span>Mata Kuliah</span></a>
+        <a class="side-link {% if request.endpoint in ['admin.offerings','admin.edit_offering'] %}active{% endif %}" href="{{ url_for('admin.offerings') }}"><i class="bi bi-calendar-week"></i><span>Kelas & Jadwal</span></a>
+        <a class="side-link {% if request.endpoint == 'admin.enrollments' %}active{% endif %}" href="{{ url_for('admin.enrollments') }}"><i class="bi bi-person-check"></i><span>Pengambilan MK <span class="nav-count">{{ pending_enrollments if pending_enrollments else '' }}</span></span></a>
+        <div class="side-section">MONITORING</div>
+        <a class="side-link {% if request.endpoint == 'admin.reports' %}active{% endif %}" href="{{ url_for('admin.reports') }}"><i class="bi bi-clipboard-data"></i><span>Rekap Presensi</span></a>
+        <a class="side-link {% if request.endpoint == 'admin.face_profiles' %}active{% endif %}" href="{{ url_for('admin.face_profiles') }}"><i class="bi bi-person-bounding-box"></i><span>Face Profile</span></a>
+        <a class="side-link {% if request.endpoint == 'admin.logs' %}active{% endif %}" href="{{ url_for('admin.logs') }}"><i class="bi bi-journal-text"></i><span>Log Aktivitas</span></a>
+      {% elif current_user.role == 'lecturer' %}
+        <a class="side-link {% if request.endpoint == 'lecturer.dashboard' %}active{% endif %}" href="{{ url_for('lecturer.dashboard') }}"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
+        <a class="side-link {% if request.endpoint in ['lecturer.classes','lecturer.class_detail'] %}active{% endif %}" href="{{ url_for('lecturer.classes') }}"><i class="bi bi-journal-bookmark"></i><span>Kelas Diampu</span></a>
+        <a class="side-link {% if request.endpoint == 'lecturer.add_teaching' %}active{% endif %}" href="{{ url_for('lecturer.add_teaching') }}"><i class="bi bi-journal-plus"></i><span>Input Mata Kuliah</span></a>
+        <a class="side-link {% if request.endpoint in ['lecturer.schedule','lecturer.download_schedule_pdf','lecturer.download_schedule_xlsx'] %}active{% endif %}" href="{{ url_for('lecturer.schedule') }}"><i class="bi bi-calendar-week"></i><span>Jadwal Mengajar</span></a>
+        <a class="side-link {% if request.endpoint in ['lecturer.statistics','lecturer.export_statistics_xlsx','lecturer.export_statistics_pdf'] %}active{% endif %}" href="{{ url_for('lecturer.statistics') }}"><i class="bi bi-bar-chart-line"></i><span>Statistik Kehadiran</span></a>
+        <a class="side-link {% if request.endpoint == 'lecturer.session_detail' %}active{% endif %}" href="{{ url_for('lecturer.classes') }}"><i class="bi bi-camera-video"></i><span>Monitoring Presensi</span></a>
+      {% else %}
+        <a class="side-link {% if request.endpoint == 'student.dashboard' %}active{% endif %}" href="{{ url_for('student.dashboard') }}"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
+        <div class="side-section">AKADEMIK</div>
+        <a class="side-link {% if request.endpoint == 'student.courses' %}active{% endif %}" href="{{ url_for('student.courses') }}"><i class="bi bi-journal-bookmark"></i><span>Mata Kuliah Saya</span></a>
+        <a class="side-link {% if request.endpoint in ['student.schedule','student.download_schedule_pdf'] %}active{% endif %}" href="{{ url_for('student.schedule') }}"><i class="bi bi-calendar-week"></i><span>Jadwal Kuliah</span></a>
+        <div class="side-section">PRESENSI</div>
+        <a class="side-link {% if request.endpoint == 'student.attendance' %}active{% endif %}" href="{{ url_for('student.attendance') }}"><i class="bi bi-camera"></i><span>Presensi Wajah</span></a>
+        <a class="side-link {% if request.endpoint == 'student.face_enrollment' %}active{% endif %}" href="{{ url_for('student.face_enrollment') }}"><i class="bi bi-person-bounding-box"></i><span>Daftarkan Wajah</span></a>
+        <a class="side-link {% if request.endpoint == 'student.history' %}active{% endif %}" href="{{ url_for('student.history') }}"><i class="bi bi-clock-history"></i><span>Riwayat Presensi</span></a>
+        <a class="side-link {% if request.endpoint == 'student.summary' %}active{% endif %}" href="{{ url_for('student.summary') }}"><i class="bi bi-bar-chart-line"></i><span>Rekap Kehadiran</span></a>
+        <a class="side-link {% if request.endpoint == 'student.notifications' %}active{% endif %}" href="{{ url_for('student.notifications') }}"><i class="bi bi-bell"></i><span>Notifikasi</span></a>
+        <a class="side-link {% if request.endpoint == 'student.profile' %}active{% endif %}" href="{{ url_for('student.profile') }}"><i class="bi bi-person-circle"></i><span>Profil Saya</span></a>
+      {% endif %}
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user-avatar">{{ current_user.full_name[:1]|upper }}</div>
+      <div class="sidebar-user-copy"><strong>{{ current_user.full_name }}</strong><small>{{ current_user.role_label }}</small></div>
+      <form method="post" action="{{ url_for('auth.logout') }}" class="ms-auto">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="icon-button logout-button" type="submit" title="Keluar"><i class="bi bi-box-arrow-right"></i></button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <button class="icon-button mobile-menu-button" id="sidebarToggle" type="button" aria-label="Buka navigasi"><i class="bi bi-list"></i></button>
+      <div class="topbar-title"><span class="eyebrow">UNIVERSITAS TEKNOKRAT INDONESIA</span><h1>{{ page_title or 'Dashboard' }}</h1></div>
+      <div class="topbar-actions">
+        {% if current_user.role == 'student' %}<a class="topbar-action" href="{{ url_for('student.notifications') }}" title="Notifikasi"><i class="bi bi-bell"></i></a>{% endif %}
+        <div class="topbar-profile"><div class="profile-avatar">{{ current_user.full_name[:1]|upper }}</div><div class="profile-meta"><strong>{{ current_user.full_name }}</strong><small>{{ current_user.role_label }}</small></div></div>
+      </div>
+    </header>
+    <main class="page-content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button></div>{% endfor %}</div>{% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+      <footer class="page-footer"><span>© {{ current_year }} Universitas Teknokrat Indonesia</span><span>Sistem Informasi Presensi Mahasiswa</span></footer>
+    </main>
+  </div>
+</div>
+{% else %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}<div class="auth-flashes">{% for category, message in messages %}<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button></div>{% endfor %}</div>{% endif %}
+  {% endwith %}
+  {% block auth_content %}{% endblock %}
+{% endif %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
