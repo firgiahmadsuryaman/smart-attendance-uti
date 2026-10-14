@@ -1,33 +1,30 @@
-# Foto Bukti Presensi — Retensi 60 Menit (Patch)
+# Foto Bukti Presensi — Rencana Patch 60 Menit Tanpa Radius
 
-Branch: feature/foto-bukti-60m-tanpa-radius
+Branch: `feature/foto-bukti-60m-tanpa-radius`
 
-This branch archives the photo-evidence patch for the local Smart Attendance UTI V8 workspace. It is intentionally isolated from `main`.
+## Status repository
+
+This document records the intended behavior only. The implementation ZIP distributed in the ChatGPT conversation has **not yet been committed into this GitHub branch**. Do not treat this documentation commit as an application-code upgrade.
 
 ## Intended behavior
-- Store a single compressed JPEG evidence frame only after token/session checks, liveness, and face match succeed.
-- Keep evidence files outside `static/` and serve them through an authenticated, lecturer-authorized route.
-- Allow evidence access for 60 minutes after the server saves it.
-- Clean up expired evidence files periodically; attendance rows remain intact.
-- Do not use browser GPS/radius to accept or reject attendance in this patch.
-- Keep face enrollment profiles separate from temporary attendance evidence.
 
-## Archive
-The source bundle is stored in `patches/smart-attendance-photo-evidence-source.zip.b64.part01` through `part04` as Base64 text. This avoids committing a binary ZIP using the GitHub connector.
+- After a student's attendance token/session checks, liveness challenge, and face match succeed, save one compressed evidence image.
+- Keep evidence files in private server-side storage, outside `static/`, and serve them only through an authenticated route.
+- Permit access for up to 60 minutes from the time the server saves the evidence.
+- A scheduled server cleanup physically deletes expired files; attendance history remains.
+- Disable GPS/radius enforcement for attendance, as requested.
+- Keep evidence photos separate from the long-lived Face Profile.
+- Restrict lecturers to evidence for sessions/classes they teach.
 
-From the repository root in PowerShell, reconstruct the ZIP:
-```powershell
-$parts = @(
-  "patches/smart-attendance-photo-evidence-source.zip.b64.part01",
-  "patches/smart-attendance-photo-evidence-source.zip.b64.part02",
-  "patches/smart-attendance-photo-evidence-source.zip.b64.part03",
-  "patches/smart-attendance-photo-evidence-source.zip.b64.part04"
-)
-$b64 = ($parts | ForEach-Object { Get-Content $_ -Raw }) -join ""
-[IO.File]::WriteAllBytes("smart-attendance-photo-evidence-source.zip", [Convert]::FromBase64String($b64))
-```
+## Required verification before deployment
 
-The archive contains only source code and documentation, not `.env`, SQLite database files, student photos, virtual environments, or backups.
+- Verify that the photo is only saved after the complete attendance verification succeeds.
+- Verify lecturer authorization on every evidence-photo request.
+- Verify access is denied after expiry even if the cleanup job has not run yet.
+- Verify cleanup physically deletes files and retries failures.
+- Verify attendance rows remain intact when evidence is deleted.
+- Verify Windows Task Scheduler or a production scheduler runs cleanup at least once per minute.
+- Verify backup/log/cache policy does not retain expired evidence indefinitely.
+- Run end-to-end tests against a backup of the local SQLite database before merging.
 
-## Important
-The default branch `main` was not changed. The ZIP is a patch bundle for the locally installed V8 project. Apply it only after a local backup and review its installer/documents before running. Full end-to-end tests against the local SQLite database and browser are not run by the GitHub commit operation.
+The source patch must be added separately to this branch before it can be considered a code commit. Do not replace `main` until the implementation has been reviewed and tested.
