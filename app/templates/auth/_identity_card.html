@@ -1,0 +1,27 @@
+<div class="identity-card" data-identity-state="{% if already_registered %}already{% elif blocked_reason %}blocked{% else %}ok{% endif %}">
+  <div class="identity-card-head">
+    <span class="identity-card-icon"><i class="bi bi-person-badge"></i></span>
+    <div class="identity-card-copy">
+      <strong>{{ identity.name }}</strong>
+      <small>{{ 'Mahasiswa' if identity.kind == 'student' else 'Dosen' }} · {{ identity.identifier }}</small>
+    </div>
+    <span class="status-pill {{ status_tone }}">{{ status_label }}</span>
+  </div>
+  <div class="detail-list">
+    <div class="detail-item"><small>Program studi</small><strong>{{ identity.program_name or '—' }}</strong></div>
+    <div class="detail-item"><small>Fakultas</small><strong>{{ identity.faculty or '—' }}</strong></div>
+    <div class="detail-item"><small>Semester</small><strong>{{ identity.semester if identity.semester else '—' }}</strong></div>
+    <div class="detail-item"><small>Angkatan</small><strong>{{ identity.cohort or '—' }}</strong></div>
+    {% if identity.nidn %}
+    <div class="detail-item"><small>NIDN</small><strong>{{ identity.nidn }}</strong></div>
+    {% endif %}
+    {% if identity.kind == 'lecturer' %}
+    <div class="detail-item"><small>Jabatan struktural</small><strong>{{ identity.positions|join(', ') or 'Tidak ada jabatan struktural' }}</strong></div>
+    {% endif %}
+  </div>
+  {% if already_registered %}
+  <div class="callout warning"><i class="bi bi-info-circle"></i><span>Akun dengan nomor ini sudah terdaftar. Silakan <a href="{{ url_for('auth.login') }}">masuk</a>.</span></div>
+  {% elif blocked_reason %}
+  <div class="callout warning"><i class="bi bi-shield-exclamation"></i><span>{{ blocked_reason }}</span></div>
+  {% endif %}
+</div>
