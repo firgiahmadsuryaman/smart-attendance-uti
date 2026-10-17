@@ -76,6 +76,74 @@ python run.py
 
 7. Buka `http://127.0.0.1:5000` dan masuk menggunakan akun Admin yang dibuat.
 
+## Instalasi Linux (venv lokal)
+
+Gunakan Python 3.10 hingga 3.12. Rentang ini penting bila nanti memakai Face Recognition:
+`mediapipe==0.10.35` pada `requirements-face.txt` belum menyediakan wheel untuk Python 3.13
+ke atas. Bila distribusi Anda hanya menyediakan Python yang lebih baru, `uv` dapat mengambil
+interpreter 3.12 terpisah tanpa mengubah Python sistem.
+
+1. Siapkan virtual environment. Pilih salah satu:
+
+```bash
+# Bila python3.12 sudah tersedia di sistem
+python3.12 -m venv .venv
+
+# Bila belum tersedia, unduh interpreter terpisah memakai uv
+uv venv --python 3.12 .venv
+```
+
+2. Aktifkan dan pasang dependensi:
+
+```bash
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements-dev.txt
+```
+
+`requirements-dev.txt` memuat `requirements.txt` ditambah `pytest`. Bila uv tersedia,
+`uv pip install -r requirements-dev.txt` jauh lebih cepat.
+
+3. Siapkan konfigurasi dan basis data:
+
+```bash
+cp .env.example .env
+python -c "import secrets; print(secrets.token_urlsafe(48))"   # salin hasilnya ke SECRET_KEY
+python -m flask --app run.py init-db
+python -m flask --app run.py seed-demo
+python -m flask --app run.py create-admin
+```
+
+`create-admin` meminta nama, email, dan password melalui terminal. Untuk pengisian otomatis
+pada lingkungan pengujian, alirkan jawabannya ke stdin:
+
+```bash
+printf 'Nama Admin\nadmin@teknokrat.ac.id\npassword-anda\npassword-anda\n' \
+  | python -m flask --app run.py create-admin
+```
+
+4. Jalankan dan buka `http://127.0.0.1:5000`:
+
+```bash
+python run.py
+```
+
+Atur `FLASK_DEBUG=1` di `.env` agar server memuat ulang otomatis saat berkas berubah. Mode ini
+hanya untuk pengembangan lokal; jangan diaktifkan di server yang dapat diakses publik.
+
+5. Jalankan pengujian:
+
+```bash
+python -m pytest tests/ -q
+```
+
+Memeriksa kesesuaian skema basis data dengan model setelah kode berubah:
+
+```bash
+python -m flask --app run.py check-schema
+python -m flask --app run.py routes      # daftar seluruh route dan endpoint
+```
+
 ## Menggunakan MySQL / XAMPP
 
 1. Jalankan MySQL melalui XAMPP.
