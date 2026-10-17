@@ -107,35 +107,10 @@ def login():
     return render_template("auth/login.html", page_title="Masuk", next_url=next_url or "")
 
 
-@auth_bp.route("/register", methods=["GET", "POST"])
+@auth_bp.route("/register", methods=["GET"])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for(dashboard_endpoint(current_user.role)))
-    if request.method == "POST":
-        npm = (request.form.get("npm") or "").strip()
-        full_name = (request.form.get("full_name") or "").strip()
-        email = (request.form.get("email") or "").strip().lower()
-        password = request.form.get("password") or ""
-        program_id = request.form.get("program_id", type=int)
-        cohort = (request.form.get("cohort") or "").strip() or None
-        program = db.session.get(StudyProgram, program_id) if program_id else None
-        if not all([npm, full_name, email, password, program]):
-            flash("Semua data wajib diisi dan program studi harus valid.", "danger")
-        elif len(password) < 8:
-            flash("Password minimal 8 karakter.", "danger")
-        elif User.query.filter_by(npm=npm).first():
-            flash("NPM sudah terdaftar.", "danger")
-        elif User.query.filter(func.lower(User.email) == email).first():
-            flash("Email sudah terdaftar.", "danger")
-        else:
-            user = User(full_name=full_name, email=email, npm=npm, role="student",
-                        program_id=program.id, cohort=cohort, active=True)
-            user.set_password(password)
-            db.session.add(user)
-            log_action("STUDENT_REGISTER", f"Mahasiswa {npm} mendaftarkan akun")
-            db.session.commit()
-            flash("Registrasi berhasil. Silakan login dan daftarkan wajah melalui dashboard.", "success")
-            return redirect(url_for("auth.login"))
     return _render_register(
         jenis="dosen" if (request.args.get("jenis") or "").strip().lower() == "dosen" else "mahasiswa"
     )

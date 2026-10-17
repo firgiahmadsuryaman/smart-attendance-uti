@@ -366,3 +366,27 @@ def test_invalid_email_format_is_rejected(app, client):
     with app.app_context():
         assert User.query.filter_by(npm="23312001").count() == 0
 
+
+def test_legacy_post_register_returns_405_and_creates_no_user(app, client):
+    """POST ke /register lama harus ditolak 405 dan tidak membuat akun."""
+    with app.app_context():
+        program = StudyProgram.query.filter_by(code="IF").one()
+        program_id = program.id
+        initial_user_count = User.query.count()
+
+    response = client.post("/register", data={
+        "npm": "99999999",
+        "full_name": "Pengguna Ilegal",
+        "email": "ilegal@example.com",
+        "password": "password123",
+        "program_id": program_id,
+        "cohort": "2024",
+    })
+
+    assert response.status_code == 405
+    with app.app_context():
+        assert User.query.filter_by(email="ilegal@example.com").count() == 0
+        assert User.query.filter_by(npm="99999999").count() == 0
+        assert User.query.count() == initial_user_count
+
+
