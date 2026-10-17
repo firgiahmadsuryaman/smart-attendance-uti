@@ -397,6 +397,12 @@ saat halaman dirender ulang setelah galat validasi, tidak ada markup kembar.
 JS hanya bertugas menyuntikkan HTML ke wadah, menampilkan atau menyembunyikan form akun, dan
 menyalakan atau mematikan tombol Cek. Ia tidak membangun markup apa pun.
 
+Kartu juga ditampilkan ketika identitas berhasil ditemukan tetapi tidak memenuhi syarat —
+program studi belum terdaftar, atau status akademik tidak aktif. Dalam keadaan itu kartu
+menampilkan lencana status beserta alasan pemblokirannya, dan form akun sengaja tidak dibuka.
+Ini memberi tahu pendaftar apa yang menghalangi, alih-alih hanya bilang "gagal". Penolakan yang
+sesungguhnya tetap terjadi di endpoint pembuatan akun, bukan hanya di tampilan.
+
 ### 7.4 Penyimpangan sadar dari halaman referensi
 
 | Referensi | Di proyek ini | Alasan |
