@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from app import create_app
@@ -45,13 +47,21 @@ def test_register_page_exposes_tabs_as_links(client):
 def test_mahasiswa_pane_is_active_by_default(client):
     body = client.get("/register").get_data(as_text=True)
 
-    assert 'data-jenis="mahasiswa"' in body
+    mhs_pane = re.search(r'<[^>]+data-pane="mahasiswa"[^>]*>', body).group(0)
+    dsn_pane = re.search(r'<[^>]+data-pane="dosen"[^>]*>', body).group(0)
+
+    assert "hidden" not in mhs_pane
+    assert "hidden" in dsn_pane
 
 
 def test_dosen_pane_can_be_selected_by_query_parameter(client):
     body = client.get("/register?jenis=dosen").get_data(as_text=True)
 
-    assert 'data-pane="dosen" aria-hidden="false"' in body or 'data-pane="dosen"' in body
+    mhs_pane = re.search(r'<[^>]+data-pane="mahasiswa"[^>]*>', body).group(0)
+    dsn_pane = re.search(r'<[^>]+data-pane="dosen"[^>]*>', body).group(0)
+
+    assert "hidden" in mhs_pane
+    assert "hidden" not in dsn_pane
     assert "/register?jenis=mahasiswa" in body
 
 
@@ -66,8 +76,12 @@ def test_page_exposes_contract_used_by_register_js(client):
 
     assert "data-register-page" in body
     assert 'data-check-url="/register/check"' in body
+    assert "data-tab" in body
+    assert "data-pane" in body
+    assert "data-check-form" in body
     assert "data-identity-slot" in body
     assert "data-account-form" in body
+    assert "data-check-button" in body
 
 
 def test_identity_card_survives_a_rejected_submission(client):
