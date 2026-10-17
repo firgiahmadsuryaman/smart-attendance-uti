@@ -272,7 +272,7 @@ dikonfirmasi. Pemetaan responsnya masih berdasarkan dugaan; lihat
 Database tidak lagi disiapkan dengan `init-db` untuk perubahan lanjutan. Repositori saat ini
 memiliki dua revisi migrasi: revisi dasar skema awal (`b3af04b5297f`) dan penambahan kolom
 identitas (`8f09cae67180`), sehingga instalasi baru dapat langsung memakai `flask db upgrade`.
-Setelah mengubah model:
+Perintah di bawah mengasumsikan virtual environment sudah aktif. Setelah mengubah model:
 
 ```bash
 python -m flask --app run.py db migrate -m "keterangan perubahan"
@@ -280,7 +280,7 @@ python -m flask --app run.py db upgrade
 python -m flask --app run.py check-schema
 ```
 
-`init-db` tetap tersedia untuk database kosong.
+Untuk database baru, `flask db upgrade` adalah jalur yang digunakan; `init-db` tetap tersedia untuk database kosong, tetapi tidak mencatat revisi migrasi.
 
 ## Menu menurut role
 
