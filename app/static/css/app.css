@@ -28,3 +28,27 @@
 .schedule-room{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
 @media(max-width:1100px){.course-search-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.course-search-keyword{grid-column:span 2}.course-search-actions{grid-column:span 2}}
 @media(max-width:640px){.course-search-grid{grid-template-columns:1fr}.course-search-keyword,.course-search-actions{grid-column:auto}.course-search-actions>*{flex:1}}
+
+/* --- Verifikasi identitas pada halaman register --- */
+.identity-badge-sample{display:flex;align-items:flex-start;gap:9px;background:#fff7e9;border:1px solid #f6e7ca;color:#8d6828;border-radius:10px;padding:11px 12px;font-size:10px;line-height:1.6;margin-bottom:16px}
+.identity-badge-sample i{font-size:15px;flex-shrink:0;margin-top:1px}
+.identity-tabs{display:flex;gap:4px;background:#f1f4f9;border:1px solid #e6ecf5;border-radius:100px;padding:4px;margin-bottom:20px}
+.identity-tab{flex:1;text-align:center;padding:9px 12px;border-radius:100px;font-size:11px;font-weight:750;color:#697386;transition:all .15s ease}
+.identity-tab:hover{color:#172033}
+.identity-tab.active{background:#fff;color:var(--blue);box-shadow:0 2px 8px rgba(20,48,86,.08)}
+.identity-check-row{display:flex;gap:9px;align-items:stretch;margin-bottom:14px}
+.identity-check-row .input-icon-wrap{flex:1}
+.identity-check-button{border-radius:100px;padding:0 22px;height:45px;font-weight:750;white-space:nowrap}
+.identity-check-button:disabled{opacity:.5}
+.identity-card{border:1px solid #e2e9f3;background:#f9fbfe;border-radius:13px;padding:15px;margin-bottom:16px}
+.identity-card-head{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+.identity-card-icon{width:40px;height:40px;border-radius:12px;background:#eaf2ff;color:#2b66bc;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.identity-card-copy{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.identity-card-copy strong{font-size:12px;color:#22385a}
+.identity-card-copy small{font-size:10px;color:#8593a7}
+.identity-card .detail-list{margin-bottom:0}
+.identity-card .callout{margin-top:12px}
+.identity-error{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.identity-pane[hidden]{display:none}
+@media(max-width:600px){.identity-check-row{flex-direction:column}.identity-check-button{width:100%}.identity-tab{font-size:10px;padding:8px 6px}}
+

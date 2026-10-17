@@ -76,6 +76,74 @@ python run.py
 
 7. Buka `http://127.0.0.1:5000` dan masuk menggunakan akun Admin yang dibuat.
 
+## Instalasi Linux (venv lokal)
+
+Gunakan Python 3.10 hingga 3.12. Rentang ini penting bila nanti memakai Face Recognition:
+`mediapipe==0.10.35` pada `requirements-face.txt` belum menyediakan wheel untuk Python 3.13
+ke atas. Bila distribusi Anda hanya menyediakan Python yang lebih baru, `uv` dapat mengambil
+interpreter 3.12 terpisah tanpa mengubah Python sistem.
+
+1. Siapkan virtual environment. Pilih salah satu:
+
+```bash
+# Bila python3.12 sudah tersedia di sistem
+python3.12 -m venv .venv
+
+# Bila belum tersedia, unduh interpreter terpisah memakai uv
+uv venv --python 3.12 .venv
+```
+
+2. Aktifkan dan pasang dependensi:
+
+```bash
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements-dev.txt
+```
+
+`requirements-dev.txt` memuat `requirements.txt` ditambah `pytest`. Bila uv tersedia,
+`uv pip install -r requirements-dev.txt` jauh lebih cepat.
+
+3. Siapkan konfigurasi dan basis data:
+
+```bash
+cp .env.example .env
+python -c "import secrets; print(secrets.token_urlsafe(48))"   # salin hasilnya ke SECRET_KEY
+python -m flask --app run.py init-db
+python -m flask --app run.py seed-demo
+python -m flask --app run.py create-admin
+```
+
+`create-admin` meminta nama, email, dan password melalui terminal. Untuk pengisian otomatis
+pada lingkungan pengujian, alirkan jawabannya ke stdin:
+
+```bash
+printf 'Nama Admin\nadmin@teknokrat.ac.id\npassword-anda\npassword-anda\n' \
+  | python -m flask --app run.py create-admin
+```
+
+4. Jalankan dan buka `http://127.0.0.1:5000`:
+
+```bash
+python run.py
+```
+
+Atur `FLASK_DEBUG=1` di `.env` agar server memuat ulang otomatis saat berkas berubah. Mode ini
+hanya untuk pengembangan lokal; jangan diaktifkan di server yang dapat diakses publik.
+
+5. Jalankan pengujian:
+
+```bash
+python -m pytest tests/ -q
+```
+
+Memeriksa kesesuaian skema basis data dengan model setelah kode berubah:
+
+```bash
+python -m flask --app run.py check-schema
+python -m flask --app run.py routes      # daftar seluruh route dan endpoint
+```
+
 ## Menggunakan MySQL / XAMPP
 
 1. Jalankan MySQL melalui XAMPP.
@@ -164,6 +232,55 @@ Mahasiswa membuka sesi melalui QR/token, mengambil sampel mata terbuka dan saat 
 8. Mahasiswa melihat jadwal mingguan dan mengunduh PDF/Excel.
 9. Dosen membuka sesi; QR/token tersedia selama sesi. Durasi hadir normal dan toleransi dihitung relatif terhadap waktu ketika tombol dibuka.
 10. Sesi ditutup oleh dosen, atau ditandai tutup saat ada permintaan terautentikasi setelah `closes_at` terlewati. Peserta approved yang belum memiliki catatan dibuatkan `ABSENT`.
+
+## Verifikasi identitas mahasiswa dan dosen
+
+Pendaftaran akun memverifikasi NPM (mahasiswa) atau NIK (dosen) ke sumber identitas sebelum
+akun dibuat. Nama, program studi, dan angkatan diambil dari sumber itu — tidak diketik oleh
+pendaftar, dan nilai yang dikirim lewat form tidak dipercaya.
+
+Sumber identitas diatur lewat `.env`:
+
+```env
+IDENTITY_PROVIDER=sample        # sample (data contoh) atau pustik (data resmi kampus)
+PUSTIK_BASE_URL=
+PUSTIK_API_KEY=
+PUSTIK_TIMEOUT=8
+IDENTITY_CHECK_RATE_LIMIT=10
+```
+
+Dengan `IDENTITY_PROVIDER=sample`, halaman register menampilkan lencana **"Mode data contoh"**
+dan server menulis peringatan di log. Data contoh hanya untuk pengembangan; jangan dipakai
+untuk data mahasiswa sungguhan.
+
+Akun data contoh yang dapat dipakai menguji:
+
+| Identifier | Jenis | Keadaan |
+| --- | --- | --- |
+| `23312001` | NPM | Informatika, semester 5, angkatan 2023, aktif |
+| `23312002` | NPM | Informatika, status Lulus — pendaftaran ditolak |
+| `23312003` | NPM | Program studi tidak terdaftar — pendaftaran ditolak |
+| `0012345678` | NIK | Dosen Informatika, aktif |
+| `99999999` | keduanya | Menyimulasikan gangguan pada sumber identitas |
+
+Provider `pustik` belum boleh diarahkan ke server PUSTIK sungguhan sampai kontrak resminya
+dikonfirmasi. Pemetaan responsnya masih berdasarkan dugaan; lihat
+`docs/SPEC_REGISTER_PUSTIK.md` bagian 4.5.
+
+### Perubahan skema setelah migrasi diaktifkan
+
+Database tidak lagi disiapkan dengan `init-db` untuk perubahan lanjutan. Repositori saat ini
+memiliki dua revisi migrasi: revisi dasar skema awal (`b3af04b5297f`) dan penambahan kolom
+identitas (`8f09cae67180`), sehingga instalasi baru dapat langsung memakai `flask db upgrade`.
+Perintah di bawah mengasumsikan virtual environment sudah aktif. Setelah mengubah model:
+
+```bash
+python -m flask --app run.py db migrate -m "keterangan perubahan"
+python -m flask --app run.py db upgrade
+python -m flask --app run.py check-schema
+```
+
+Untuk database baru, `flask db upgrade` adalah jalur yang digunakan; `init-db` tetap tersedia untuk database kosong, tetapi tidak mencatat revisi migrasi.
 
 ## Menu menurut role
 

@@ -1,24 +1,72 @@
 {% extends 'base.html' %}
 {% block auth_content %}
-<div class="auth-page register-page">
+{% macro account_fields(prefix, jenis, label) %}
+      <label for="{{ prefix }}-email">Email aktif</label>
+      <div class="input-icon-wrap"><i class="bi bi-envelope"></i><input id="{{ prefix }}-email" name="email" type="email" placeholder="nama@email.com" value="{{ request.form.get('email','') }}" required></div>
+      <label for="{{ prefix }}-password">Password <span class="optional-text">(minimal 8 karakter)</span></label>
+      <div class="input-icon-wrap"><i class="bi bi-lock"></i><input id="{{ prefix }}-password" name="password" type="password" autocomplete="new-password" placeholder="Buat password yang kuat" required><button type="button" class="toggle-password" data-target="{{ prefix }}-password" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button></div>
+      <label for="{{ prefix }}-password-confirm">Konfirmasi password</label>
+      <div class="input-icon-wrap"><i class="bi bi-lock-fill"></i><input id="{{ prefix }}-password-confirm" name="password_confirm" type="password" autocomplete="new-password" placeholder="Ulangi password" required></div>
+{% endmacro %}
+<div class="auth-page register-page" data-register-page data-check-url="{{ url_for('auth.register_check') }}">
   <section class="auth-hero register-hero" style="--campus-image: url('{{ url_for('static', filename='images/foto-kampus.jpg') }}')">
     <div class="auth-brand"><img class="auth-logo" src="{{ url_for('static', filename='images/logo-teknokrat.png') }}" alt="Logo Universitas Teknokrat Indonesia"><div><strong>UNIVERSITAS TEKNOKRAT INDONESIA</strong><small>SMART ATTENDANCE PORTAL</small></div></div>
-    <div class="auth-hero-copy"><span class="hero-kicker">MULAI DARI SINI</span><h1>Satu akun untuk<br><em>perjalanan akademikmu.</em></h1><p>Daftarkan akun mahasiswa untuk mengakses jadwal, presensi, dan riwayat kehadiran dalam satu sistem.</p><div class="register-steps"><div class="step-item active"><span>01</span><div><strong>Buat akun</strong><small>Isi data mahasiswa</small></div></div><div class="step-item"><span>02</span><div><strong>Daftarkan wajah</strong><small>Dilakukan setelah login</small></div></div><div class="step-item"><span>03</span><div><strong>Pilih mata kuliah</strong><small>Ajukan kelas semester aktif</small></div></div></div></div>
-    <div class="auth-hero-footer"><span class="red-line"></span><span>Data yang benar membantu menjaga keakuratan presensi.</span></div><div class="hero-decoration hero-decoration-one"></div><div class="hero-decoration hero-decoration-two"></div>
+    <div class="auth-hero-copy"><span class="hero-kicker">MULAI DARI SINI</span><h1>Verifikasi identitas,<br><em>lalu buat akunmu.</em></h1><p>Akun mahasiswa dan dosen dibuat dari data akademik resmi, sehingga nama, program studi, dan angkatan tidak perlu diketik ulang.</p><div class="register-steps"><div class="step-item active"><span>01</span><div><strong>Verifikasi identitas</strong><small>Masukkan NPM atau NIK</small></div></div><div class="step-item"><span>02</span><div><strong>Buat akun</strong><small>Email dan kata sandi</small></div></div><div class="step-item"><span>03</span><div><strong>Daftarkan wajah</strong><small>Dilakukan setelah login</small></div></div><div class="step-item"><span>04</span><div><strong>Pilih mata kuliah</strong><small>Kelas pada semester aktif</small></div></div></div></div>
+    <div class="auth-hero-footer"><span class="red-line"></span><span>Data yang benar membantu menjaga akurasi presensi.</span></div><div class="hero-decoration hero-decoration-one"></div><div class="hero-decoration hero-decoration-two"></div>
   </section>
-  <section class="auth-panel"><div class="auth-form-wrap register-form-wrap"><span class="form-kicker">REGISTRASI MAHASISWA</span><h2>Buat akun baru</h2><p class="muted-intro">Isi informasi berikut sesuai data akademik Anda.</p>
-    <form method="post" class="auth-form" novalidate>
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <label for="npm">Nomor Pokok Mahasiswa (NPM)</label><div class="input-icon-wrap"><i class="bi bi-card-text"></i><input id="npm" name="npm" type="text" placeholder="Contoh: 23312001" value="{{ request.form.get('npm','') }}" required></div>
-      <label for="full_name">Nama lengkap</label><div class="input-icon-wrap"><i class="bi bi-person"></i><input id="full_name" name="full_name" type="text" placeholder="Nama sesuai data akademik" value="{{ request.form.get('full_name','') }}" required></div>
-      <label for="email">Email aktif</label><div class="input-icon-wrap"><i class="bi bi-envelope"></i><input id="email" name="email" type="email" placeholder="nama@email.com" value="{{ request.form.get('email','') }}" required></div>
-      <label for="program_id">Program studi</label><div class="input-icon-wrap select-icon-wrap"><i class="bi bi-mortarboard"></i><select id="program_id" name="program_id" required><option value="">Pilih program studi</option>{% for program in programs %}<option value="{{ program.id }}" {% if request.form.get('program_id')|int == program.id %}selected{% endif %}>{{ program.name }}{% if program.code %} ({{ program.code }}){% endif %}</option>{% endfor %}</select></div>
-      <label for="cohort">Angkatan <span class="optional-text">(opsional)</span></label><div class="input-icon-wrap"><i class="bi bi-calendar3"></i><input id="cohort" name="cohort" type="text" inputmode="numeric" maxlength="4" placeholder="Contoh: 2023" value="{{ request.form.get('cohort','') }}"></div>
-      <label for="password">Password <span class="optional-text">(minimal 8 karakter)</span></label><div class="input-icon-wrap"><i class="bi bi-lock"></i><input id="password" name="password" type="password" autocomplete="new-password" placeholder="Buat password yang kuat" required><button type="button" class="toggle-password" data-target="password" aria-label="Tampilkan password"><i class="bi bi-eye"></i></button></div>
-      <div class="form-note"><i class="bi bi-info-circle"></i><span>Pendaftaran wajah dilakukan setelah Anda masuk ke dashboard. Kelas dan jadwal ditentukan oleh data yang tersedia di sistem.</span></div>
-      <button class="btn btn-primary btn-lg w-100 auth-submit" type="submit">Daftar akun <i class="bi bi-arrow-right"></i></button>
-    </form>
+  <section class="auth-panel"><div class="auth-form-wrap register-form-wrap"><span class="form-kicker">REGISTRASI AKUN</span><h2>Daftar akun</h2>
+    {% if sample_mode %}<div class="identity-badge-sample"><i class="bi bi-exclamation-triangle"></i><span>Mode data contoh — identitas berasal dari data uji, bukan data resmi kampus.</span></div>{% endif %}
+    <p class="muted-intro">Masukkan NPM atau NIK agar data Anda dicocokkan dengan data akademik resmi universitas.</p>
+
+    <div class="identity-tabs" role="tablist" aria-label="Jenis akun">
+      <a class="identity-tab {% if jenis != 'dosen' %}active{% endif %}" role="tab" data-tab data-jenis="mahasiswa" aria-selected="{{ 'true' if jenis != 'dosen' else 'false' }}" href="{{ url_for('auth.register') }}?jenis=mahasiswa">Mahasiswa</a>
+      <a class="identity-tab {% if jenis == 'dosen' %}active{% endif %}" role="tab" data-tab data-jenis="dosen" aria-selected="{{ 'true' if jenis == 'dosen' else 'false' }}" href="{{ url_for('auth.register') }}?jenis=dosen">Dosen</a>
+    </div>
+
+    <div class="identity-pane" data-pane="mahasiswa" data-jenis="mahasiswa" {% if jenis == 'dosen' %}hidden{% endif %}>
+      <form method="post" action="{{ url_for('auth.register_check') }}" class="auth-form identity-check-form" data-check-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="jenis" value="mahasiswa">
+        <label for="npm">Nomor Pokok Mahasiswa (NPM)</label>
+        <div class="identity-check-row">
+          <div class="input-icon-wrap"><i class="bi bi-card-text"></i><input id="npm" name="npm" type="text" inputmode="numeric" placeholder="Masukkan NPM" required></div>
+          <button class="btn btn-outline-primary identity-check-button" type="submit" data-check-button disabled>Cek</button>
+        </div>
+      </form>
+      <div data-identity-slot>{% if identity and jenis != 'dosen' %}{% include 'auth/_identity_card.html' %}{% endif %}</div>
+      <form method="post" action="{{ url_for('auth.register_student') }}" class="auth-form" data-account-form {% if not identity or blocked_reason or already_registered %}hidden{% endif %}>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="jenis" value="mahasiswa">
+        <input type="hidden" name="npm" value="{{ request.form.get('npm', '') }}">
+        {{ account_fields('mhs', 'mahasiswa', 'NPM') }}
+        <div class="form-note"><i class="bi bi-info-circle"></i><span>Pendaftaran wajah dilakukan setelah Anda masuk ke dashboard.</span></div>
+        <button class="btn btn-primary btn-lg w-100 auth-submit" type="submit">Buat akun <i class="bi bi-arrow-right"></i></button>
+      </form>
+    </div>
+
+    <div class="identity-pane" data-pane="dosen" data-jenis="dosen" {% if jenis != 'dosen' %}hidden{% endif %}>
+      <form method="post" action="{{ url_for('auth.register_check') }}" class="auth-form identity-check-form" data-check-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="jenis" value="dosen">
+        <label for="nik">Nomor Induk Kepegawaian (NIK)</label>
+        <div class="identity-check-row">
+          <div class="input-icon-wrap"><i class="bi bi-person-badge"></i><input id="nik" name="nik" type="text" inputmode="numeric" placeholder="Masukkan NIK" required></div>
+          <button class="btn btn-outline-primary identity-check-button" type="submit" data-check-button disabled>Cek</button>
+        </div>
+      </form>
+      <div data-identity-slot>{% if identity and jenis == 'dosen' %}{% include 'auth/_identity_card.html' %}{% endif %}</div>
+      <form method="post" action="{{ url_for('auth.register_lecturer') }}" class="auth-form" data-account-form {% if not identity or blocked_reason or already_registered %}hidden{% endif %}>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="jenis" value="dosen">
+        <input type="hidden" name="nik" value="{{ request.form.get('nik', '') }}">
+        {{ account_fields('dsn', 'dosen', 'NIK') }}
+        <div class="form-note"><i class="bi bi-info-circle"></i><span>Kelas yang Anda ampu diatur setelah login.</span></div>
+        <button class="btn btn-primary btn-lg w-100 auth-submit" type="submit">Buat akun <i class="bi bi-arrow-right"></i></button>
+      </form>
+    </div>
+
     <p class="auth-switch">Sudah mempunyai akun? <a href="{{ url_for('auth.login') }}">Masuk di sini</a></p>
   </div><div class="auth-panel-footer">© {{ current_year }} Universitas Teknokrat Indonesia</div></section>
 </div>
+{% block scripts %}<script src="{{ url_for('static', filename='js/register.js') }}"></script>{% endblock %}
 {% endblock %}

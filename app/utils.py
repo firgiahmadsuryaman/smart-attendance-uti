@@ -1,3 +1,5 @@
+import threading
+import time
 from functools import wraps
 from datetime import datetime
 from flask import abort, request
@@ -88,3 +90,32 @@ def finalize_expired_sessions(now=None):
     except Exception:
         db.session.rollback()
         raise
+
+
+# ponytail: pembatas berbasis memori dalam satu proses; beralih ke Redis bila memakai banyak worker.
+_rate_limit_lock = threading.Lock()
+_rate_limit_hits = {}
+
+
+def check_rate_limit(key, limit, window_seconds=60):
+    """True bila permintaan masih diizinkan; sekaligus menambah satu hitungan."""
+    if limit <= 0:
+        return True
+
+    now = time.monotonic()
+    cutoff = now - window_seconds
+    with _rate_limit_lock:
+        hits = [stamp for stamp in _rate_limit_hits.get(key, []) if stamp > cutoff]
+        if len(hits) >= limit:
+            _rate_limit_hits[key] = hits
+            return False
+        hits.append(now)
+        _rate_limit_hits[key] = hits
+        return True
+
+
+def reset_rate_limit():
+    """Kosongkan seluruh hitungan. Dipakai fixture pengujian antar-tes."""
+    with _rate_limit_lock:
+        _rate_limit_hits.clear()
+

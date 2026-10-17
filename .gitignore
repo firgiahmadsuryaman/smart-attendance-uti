@@ -12,3 +12,6 @@ instance/
 uploads/faces/
 face_data/
 face_profiles/
+
+# Artefak tooling lokal (snapshot/log browser saat pengujian otomatis)
+.playwright-mcp/

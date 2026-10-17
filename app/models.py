@@ -16,6 +16,10 @@ class User(UserMixin, db.Model):
     employee_id = db.Column(db.String(40), unique=True, nullable=True)
     program_id = db.Column(db.Integer, db.ForeignKey("study_programs.id"), nullable=True)
     cohort = db.Column(db.String(10), nullable=True)
+    # Asal identitas: PUSTIK_API, SAMPLE, atau MANUAL. NULL berarti diisi manual.
+    identity_source = db.Column(db.String(20), nullable=True)
+    # Nomor Induk Dosen Nasional, terpisah dari employee_id yang menyimpan NIK.
+    nidn = db.Column(db.String(30), nullable=True)
     active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
