@@ -186,3 +186,8 @@ Investigasi ini hanya membaca endpoint publik pada halaman register (fitur "peri
 yang memang tersedia untuk umum), tanpa mencoba masuk ke akun siapa pun, tanpa menembus
 autentikasi, dan tanpa pengambilan data massal. Data identitas mahasiswa dan dosen adalah data
 pribadi; pemakaiannya di proyek ini memerlukan izin dan dasar pemrosesan dari universitas.
+
+## Lanjutan
+
+Rencana teknis dan status implementasi integrasi ini ada di
+`docs/SPEC_REGISTER_PUSTIK.md`.

@@ -233,6 +233,55 @@ Mahasiswa membuka sesi melalui QR/token, mengambil sampel mata terbuka dan saat 
 9. Dosen membuka sesi; QR/token tersedia selama sesi. Durasi hadir normal dan toleransi dihitung relatif terhadap waktu ketika tombol dibuka.
 10. Sesi ditutup oleh dosen, atau ditandai tutup saat ada permintaan terautentikasi setelah `closes_at` terlewati. Peserta approved yang belum memiliki catatan dibuatkan `ABSENT`.
 
+## Verifikasi identitas mahasiswa dan dosen
+
+Pendaftaran akun memverifikasi NPM (mahasiswa) atau NIK (dosen) ke sumber identitas sebelum
+akun dibuat. Nama, program studi, dan angkatan diambil dari sumber itu — tidak diketik oleh
+pendaftar, dan nilai yang dikirim lewat form tidak dipercaya.
+
+Sumber identitas diatur lewat `.env`:
+
+```env
+IDENTITY_PROVIDER=sample        # sample (data contoh) atau pustik (data resmi kampus)
+PUSTIK_BASE_URL=
+PUSTIK_API_KEY=
+PUSTIK_TIMEOUT=8
+IDENTITY_CHECK_RATE_LIMIT=10
+```
+
+Dengan `IDENTITY_PROVIDER=sample`, halaman register menampilkan lencana **"Mode data contoh"**
+dan server menulis peringatan di log. Data contoh hanya untuk pengembangan; jangan dipakai
+untuk data mahasiswa sungguhan.
+
+Akun data contoh yang dapat dipakai menguji:
+
+| Identifier | Jenis | Keadaan |
+| --- | --- | --- |
+| `23312001` | NPM | Informatika, semester 5, angkatan 2023, aktif |
+| `23312002` | NPM | Informatika, status Lulus — pendaftaran ditolak |
+| `23312003` | NPM | Program studi tidak terdaftar — pendaftaran ditolak |
+| `0012345678` | NIK | Dosen Informatika, aktif |
+| `99999999` | keduanya | Menyimulasikan gangguan pada sumber identitas |
+
+Provider `pustik` belum boleh diarahkan ke server PUSTIK sungguhan sampai kontrak resminya
+dikonfirmasi. Pemetaan responsnya masih berdasarkan dugaan; lihat
+`docs/SPEC_REGISTER_PUSTIK.md` bagian 4.5.
+
+### Perubahan skema setelah migrasi diaktifkan
+
+Database tidak lagi disiapkan dengan `init-db` untuk perubahan lanjutan. Repositori saat ini
+memiliki dua revisi migrasi: revisi dasar skema awal (`b3af04b5297f`) dan penambahan kolom
+identitas (`8f09cae67180`), sehingga instalasi baru dapat langsung memakai `flask db upgrade`.
+Setelah mengubah model:
+
+```bash
+python -m flask --app run.py db migrate -m "keterangan perubahan"
+python -m flask --app run.py db upgrade
+python -m flask --app run.py check-schema
+```
+
+`init-db` tetap tersedia untuk database kosong.
+
 ## Menu menurut role
 
 ### Admin
