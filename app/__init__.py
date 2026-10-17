@@ -6,6 +6,24 @@ from flask_login import current_user
 from flask_wtf.csrf import CSRFError
 from .extensions import db, login_manager, migrate, csrf
 
+DEMO_STUDY_PROGRAMS = [
+    ("SING", "Sastra Inggris"),
+    ("PMAT", "Pendidikan Matematika"),
+    ("PBI", "Pendidikan Bahasa Inggris"),
+    ("POR", "Pendidikan Olahraga"),
+    ("BI", "Bahasa Inggris"),
+    ("D3BI", "D3 Bahasa Inggris"),
+    ("SI", "Sistem Informasi"),
+    ("IF", "Informatika"),
+    ("TI", "Teknologi Informasi"),
+    ("TS", "Teknik Sipil"),
+    ("TE", "Teknik Elektro"),
+    ("TK", "Teknik Komputer"),
+    ("IK", "Ilmu Komputer"),
+    ("MNJ", "Manajemen"),
+    ("AKT", "Akuntansi"),
+]
+
 
 def create_app(test_config=None):
     load_dotenv()
@@ -125,23 +143,7 @@ def create_app(test_config=None):
         from sqlalchemy import or_
         from .models import StudyProgram, Semester
         db.create_all()
-        programs = [
-            ("SING", "Sastra Inggris"),
-            ("PMAT", "Pendidikan Matematika"),
-            ("PBI", "Pendidikan Bahasa Inggris"),
-            ("POR", "Pendidikan Olahraga"),
-            ("BI", "Bahasa Inggris"),
-            ("D3BI", "D3 Bahasa Inggris"),
-            ("SI", "Sistem Informasi"),
-            ("IF", "Informatika"),
-            ("TI", "Teknologi Informasi"),
-            ("TS", "Teknik Sipil"),
-            ("TE", "Teknik Elektro"),
-            ("TK", "Teknik Komputer"),
-            ("IK", "Ilmu Komputer"),
-            ("MNJ", "Manajemen"),
-            ("AKT", "Akuntansi"),
-        ]
+        programs = DEMO_STUDY_PROGRAMS
         for code, name in programs:
             existing = StudyProgram.query.filter(or_(StudyProgram.code == code, StudyProgram.name == name)).first()
             if not existing:
