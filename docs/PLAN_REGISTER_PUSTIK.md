@@ -1007,12 +1007,11 @@ Expected: FAIL — `ImportError: cannot import name 'check_rate_limit' from 'app
 
 - [ ] **Step 3: Tulis implementasi**
 
-Tambahkan di akhir `app/utils.py`:
+Tambahkan `import threading` dan `import time` pada blok impor di bagian atas `app/utils.py`, sejajar dengan impor yang sudah ada. Jangan menaruh impor di tengah atau akhir berkas.
+
+Lalu tambahkan di akhir `app/utils.py`:
 
 ```python
-import threading
-import time
-
 _rate_limit_lock = threading.Lock()
 _rate_limit_hits = {}
 
@@ -1399,7 +1398,7 @@ from flask import Blueprint, current_app, flash, redirect, render_template, requ
 from flask_login import current_user, login_user, logout_user
 from sqlalchemy import func
 from ..extensions import db
-from ..integrations import get_identity_provider, identity_provider_is_sample
+from ..integrations import get_identity_provider
 from ..integrations.base import IdentityError, IdentityNotActive, ProgramNotRegistered, status_label, status_tone
 from ..models import User, StudyProgram
 from ..utils import check_rate_limit, dashboard_endpoint, log_action
@@ -1708,6 +1707,7 @@ Expected: FAIL — status 404 karena route belum ada.
 Di blok impor `app/blueprints/auth.py` (dari Task 6), tambahkan:
 
 ```python
+from ..integrations import identity_provider_is_sample
 from email_validator import EmailNotValidError, validate_email
 ```
 
@@ -1970,17 +1970,22 @@ def test_page_exposes_contract_used_by_register_js(client):
     assert "data-account-form" in body
 
 
-def test_identity_card_survives_a_failed_submission(client):
-    """Kartu konfirmasi tidak boleh hilang hanya karena kata sandi salah ketik."""
+def test_identity_card_survives_a_rejected_submission(client):
+    """Kartu konfirmasi tetap tampil saat pendaftaran ditolak setelah identitas terbaca.
+
+    Kegagalan yang terjadi SEBELUM identitas diambil dari provider (kata sandi terlalu
+    pendek, format email salah, email atau identitas sudah terdaftar) memang tidak
+    menyertakan kartu, karena identitasnya belum ada untuk ditampilkan.
+    """
     response = client.post("/register/student", data={
-        "jenis": "mahasiswa", "npm": "23312001",
-        "email": "ayu@test.local", "password": "pendek", "password_confirm": "pendek",
+        "jenis": "mahasiswa", "npm": "23312002",
+        "email": "bagus@example.com", "password": "rahasia-123", "password_confirm": "rahasia-123",
     })
 
     body = response.get_data(as_text=True)
-    assert response.status_code == 400
-    assert "Ayu Lestari" in body
-    assert 'value="23312001"' in body
+    assert response.status_code == 422
+    assert "Bagus Prakoso" in body
+    assert 'value="23312002"' in body
 ```
 
 - [ ] **Step 2: Jalankan pengujian, pastikan gagal**
@@ -2028,7 +2033,7 @@ Ganti seluruh isi `app/templates/auth/register.html`:
           <button class="btn btn-outline-primary identity-check-button" type="submit" data-check-button disabled>Cek</button>
         </div>
       </form>
-      <div data-identity-slot>{% if identity %}{% include 'auth/_identity_card.html' %}{% endif %}</div>
+      <div data-identity-slot>{% if identity and jenis != 'dosen' %}{% include 'auth/_identity_card.html' %}{% endif %}</div>
       <form method="post" action="{{ url_for('auth.register_student') }}" class="auth-form" data-account-form {% if not identity or blocked_reason or already_registered %}hidden{% endif %}>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="jenis" value="mahasiswa">
@@ -2049,7 +2054,7 @@ Ganti seluruh isi `app/templates/auth/register.html`:
           <button class="btn btn-outline-primary identity-check-button" type="submit" data-check-button disabled>Cek</button>
         </div>
       </form>
-      <div data-identity-slot>{% if identity %}{% include 'auth/_identity_card.html' %}{% endif %}</div>
+      <div data-identity-slot>{% if identity and jenis == 'dosen' %}{% include 'auth/_identity_card.html' %}{% endif %}</div>
       <form method="post" action="{{ url_for('auth.register_lecturer') }}" class="auth-form" data-account-form {% if not identity or blocked_reason or already_registered %}hidden{% endif %}>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="jenis" value="dosen">
