@@ -100,3 +100,16 @@ def test_identity_card_survives_a_rejected_submission(client):
     assert response.status_code == 422
     assert "Bagus Prakoso" in body
     assert 'value="23312002"' in body
+
+
+def test_page_loads_register_script(client):
+    body = client.get("/register").get_data(as_text=True)
+
+    assert "js/register.js" in body
+
+
+def test_register_script_file_exists():
+    from pathlib import Path
+
+    assert Path("app/static/js/register.js").is_file()
+

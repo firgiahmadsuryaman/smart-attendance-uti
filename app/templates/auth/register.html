@@ -68,4 +68,5 @@
     <p class="auth-switch">Sudah mempunyai akun? <a href="{{ url_for('auth.login') }}">Masuk di sini</a></p>
   </div><div class="auth-panel-footer">© {{ current_year }} Universitas Teknokrat Indonesia</div></section>
 </div>
+{% block scripts %}<script src="{{ url_for('static', filename='js/register.js') }}"></script>{% endblock %}
 {% endblock %}
