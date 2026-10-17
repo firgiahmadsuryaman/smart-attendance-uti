@@ -40,6 +40,11 @@ def create_app(test_config=None):
         SESSION_COOKIE_SAMESITE="Lax",
         REMEMBER_COOKIE_HTTPONLY=True,
         DEBUG=os.getenv("FLASK_DEBUG", "0") == "1",
+        IDENTITY_PROVIDER=os.getenv("IDENTITY_PROVIDER", "sample"),
+        PUSTIK_BASE_URL=os.getenv("PUSTIK_BASE_URL", ""),
+        PUSTIK_API_KEY=os.getenv("PUSTIK_API_KEY", ""),
+        PUSTIK_TIMEOUT=int(os.getenv("PUSTIK_TIMEOUT", "8")),
+        IDENTITY_CHECK_RATE_LIMIT=int(os.getenv("IDENTITY_CHECK_RATE_LIMIT", "10")),
     )
     if test_config:
         app.config.update(test_config)
@@ -217,5 +222,11 @@ def create_app(test_config=None):
         db.session.add(user)
         db.session.commit()
         click.echo("Akun Admin berhasil dibuat.")
+
+    from .integrations import identity_provider_is_sample
+    if identity_provider_is_sample(app.config) and not app.config.get("TESTING"):
+        app.logger.warning(
+            "IDENTITY_PROVIDER=sample: identitas berasal dari data contoh, bukan data resmi kampus."
+        )
 
     return app

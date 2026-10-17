@@ -207,3 +207,60 @@ def test_pustik_unmappable_body_is_unavailable():
     with pytest.raises(ProviderUnavailable):
         provider.resolve_student("23312001")
 
+
+from app import create_app
+from app.integrations import build_identity_provider, identity_provider_is_sample
+
+
+def test_factory_builds_sample_provider_by_default():
+    provider = build_identity_provider({})
+
+    assert provider.source_code == "SAMPLE"
+
+
+def test_factory_builds_pustik_provider_from_config():
+    provider = build_identity_provider(
+        {"IDENTITY_PROVIDER": "pustik", "PUSTIK_BASE_URL": "https://pustik.example/api"}
+    )
+
+    assert provider.source_code == "PUSTIK_API"
+    assert provider.base_url == "https://pustik.example/api"
+
+
+def test_factory_rejects_unknown_provider_name():
+    with pytest.raises(ProviderMisconfigured):
+        build_identity_provider({"IDENTITY_PROVIDER": "entah"})
+
+
+def test_identity_provider_is_sample_flag():
+    assert identity_provider_is_sample({}) is True
+    assert identity_provider_is_sample({"IDENTITY_PROVIDER": "pustik"}) is False
+
+
+def test_app_config_carries_identity_keys():
+    app = create_app({
+        "TESTING": True,
+        "SECRET_KEY": "test-secret",
+        "SQLALCHEMY_DATABASE_URI": "sqlite://",
+        "WTF_CSRF_ENABLED": False,
+    })
+
+    assert app.config["IDENTITY_PROVIDER"] == "sample"
+    assert app.config["IDENTITY_CHECK_RATE_LIMIT"] == 10
+    assert "PUSTIK_BASE_URL" in app.config
+
+
+def test_get_identity_provider_is_cached_per_app():
+    from app.integrations import get_identity_provider
+
+    app = create_app({
+        "TESTING": True,
+        "SECRET_KEY": "test-secret",
+        "SQLALCHEMY_DATABASE_URI": "sqlite://",
+        "WTF_CSRF_ENABLED": False,
+    })
+
+    with app.app_context():
+        assert get_identity_provider() is get_identity_provider()
+
+
