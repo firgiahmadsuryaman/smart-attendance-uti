@@ -103,7 +103,7 @@ def test_check_reports_inactive_status_as_blocked(client):
 
 def test_check_flags_already_registered_identifier(app, client):
     with app.app_context():
-        user = User(full_name="Sudah Ada", email="sudah@test.local", npm="23312001",
+        user = User(full_name="Sudah Ada", email="sudah@example.com", npm="23312001",
                     role="student", active=True)
         user.set_password("password-uji-123")
         db.session.add(user)
@@ -201,7 +201,7 @@ def test_student_registration_uses_provider_identity(app, client):
     response = _register(
         client, "/register/student",
         jenis="mahasiswa", npm="23312001",
-        email="ayu@test.local", password="rahasia-123", password_confirm="rahasia-123",
+        email="ayu@example.com", password="rahasia-123", password_confirm="rahasia-123",
     )
 
     assert response.status_code == 302
@@ -218,7 +218,7 @@ def test_forged_identity_fields_in_form_are_ignored(app, client):
     _register(
         client, "/register/student",
         jenis="mahasiswa", npm="23312001",
-        email="palsu@test.local", password="rahasia-123", password_confirm="rahasia-123",
+        email="palsu@example.com", password="rahasia-123", password_confirm="rahasia-123",
         full_name="Nama Palsu", program_id="9999", cohort="1900",
     )
 
@@ -233,7 +233,7 @@ def test_lecturer_registration_stores_nik_and_nidn(app, client):
     _register(
         client, "/register/lecturer",
         jenis="dosen", nik="0012345678",
-        email="dwi@test.local", password="rahasia-123", password_confirm="rahasia-123",
+        email="dwi@example.com", password="rahasia-123", password_confirm="rahasia-123",
     )
 
     with app.app_context():
@@ -248,11 +248,11 @@ def test_sending_both_identifiers_only_creates_the_active_pane_account(app, clie
     _register(
         client, "/register/student",
         jenis="mahasiswa", npm="23312001", nik="0012345678",
-        email="ganda@test.local", password="rahasia-123", password_confirm="rahasia-123",
+        email="ganda@example.com", password="rahasia-123", password_confirm="rahasia-123",
     )
 
     with app.app_context():
-        assert User.query.filter_by(email="ganda@test.local").count() == 1
+        assert User.query.filter_by(email="ganda@example.com").count() == 1
         assert User.query.filter_by(employee_id="0012345678").count() == 0
 
 
@@ -260,29 +260,29 @@ def test_inactive_status_is_rejected_at_creation(app, client):
     response = _register(
         client, "/register/student",
         jenis="mahasiswa", npm="23312002",
-        email="lulus@test.local", password="rahasia-123", password_confirm="rahasia-123",
+        email="lulus@example.com", password="rahasia-123", password_confirm="rahasia-123",
     )
 
     assert response.status_code == 422
     with app.app_context():
-        assert User.query.filter_by(email="lulus@test.local").count() == 0
+        assert User.query.filter_by(email="lulus@example.com").count() == 0
 
 
 def test_unregistered_program_is_rejected_at_creation(app, client):
     response = _register(
         client, "/register/student",
         jenis="mahasiswa", npm="23312003",
-        email="robot@test.local", password="rahasia-123", password_confirm="rahasia-123",
+        email="robot@example.com", password="rahasia-123", password_confirm="rahasia-123",
     )
 
     assert response.status_code == 422
     with app.app_context():
-        assert User.query.filter_by(email="robot@test.local").count() == 0
+        assert User.query.filter_by(email="robot@example.com").count() == 0
 
 
 def test_duplicate_email_is_rejected_without_touching_existing_account(app, client):
     with app.app_context():
-        existing = User(full_name="Pemilik Lama", email="ayu@test.local", npm="20999999",
+        existing = User(full_name="Pemilik Lama", email="ayu@example.com", npm="20999999",
                         role="student", active=True)
         existing.set_password("password-uji-123")
         db.session.add(existing)
@@ -291,19 +291,19 @@ def test_duplicate_email_is_rejected_without_touching_existing_account(app, clie
     response = _register(
         client, "/register/student",
         jenis="mahasiswa", npm="23312001",
-        email="ayu@test.local", password="rahasia-123", password_confirm="rahasia-123",
+        email="ayu@example.com", password="rahasia-123", password_confirm="rahasia-123",
     )
 
     assert response.status_code == 400
     with app.app_context():
-        assert User.query.filter_by(email="ayu@test.local").count() == 1
-        assert User.query.filter_by(email="ayu@test.local").one().full_name == "Pemilik Lama"
+        assert User.query.filter_by(email="ayu@example.com").count() == 1
+        assert User.query.filter_by(email="ayu@example.com").one().full_name == "Pemilik Lama"
         assert User.query.filter_by(npm="23312001").count() == 0
 
 
 def test_duplicate_identifier_is_rejected(app, client):
     with app.app_context():
-        existing = User(full_name="Sudah Ada", email="lama@test.local", npm="23312001",
+        existing = User(full_name="Sudah Ada", email="lama@example.com", npm="23312001",
                         role="student", active=True)
         existing.set_password("password-uji-123")
         db.session.add(existing)
@@ -312,31 +312,31 @@ def test_duplicate_identifier_is_rejected(app, client):
     response = _register(
         client, "/register/student",
         jenis="mahasiswa", npm="23312001",
-        email="baru@test.local", password="rahasia-123", password_confirm="rahasia-123",
+        email="baru@example.com", password="rahasia-123", password_confirm="rahasia-123",
     )
 
     assert response.status_code == 400
     with app.app_context():
-        assert User.query.filter_by(email="baru@test.local").count() == 0
+        assert User.query.filter_by(email="baru@example.com").count() == 0
 
 
 def test_password_mismatch_is_rejected(app, client):
     response = _register(
         client, "/register/student",
         jenis="mahasiswa", npm="23312001",
-        email="ayu@test.local", password="rahasia-123", password_confirm="beda-123",
+        email="ayu@example.com", password="rahasia-123", password_confirm="beda-123",
     )
 
     assert response.status_code == 400
     with app.app_context():
-        assert User.query.filter_by(email="ayu@test.local").count() == 0
+        assert User.query.filter_by(email="ayu@example.com").count() == 0
 
 
 def test_short_password_is_rejected(app, client):
     response = _register(
         client, "/register/student",
         jenis="mahasiswa", npm="23312001",
-        email="ayu@test.local", password="pendek", password_confirm="pendek",
+        email="ayu@example.com", password="pendek", password_confirm="pendek",
     )
 
     assert response.status_code == 400
@@ -347,12 +347,12 @@ def test_unknown_identifier_is_rejected_at_creation(app, client):
     response = _register(
         client, "/register/student",
         jenis="mahasiswa", npm="00000000",
-        email="hantu@test.local", password="rahasia-123", password_confirm="rahasia-123",
+        email="hantu@example.com", password="rahasia-123", password_confirm="rahasia-123",
     )
 
     assert response.status_code == 404
     with app.app_context():
-        assert User.query.filter_by(email="hantu@test.local").count() == 0
+        assert User.query.filter_by(email="hantu@example.com").count() == 0
 
 
 def test_invalid_email_format_is_rejected(app, client):

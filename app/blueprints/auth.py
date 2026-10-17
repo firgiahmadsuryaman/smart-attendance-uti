@@ -1,11 +1,5 @@
-import email_validator
 from email_validator import EmailNotValidError, validate_email
 from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
-
-if "local" in email_validator.SPECIAL_USE_DOMAIN_NAMES:
-    email_validator.SPECIAL_USE_DOMAIN_NAMES = [
-        d for d in email_validator.SPECIAL_USE_DOMAIN_NAMES if d != "local"
-    ]
 from flask_login import current_user, login_user, logout_user
 from sqlalchemy import func
 from ..extensions import db
