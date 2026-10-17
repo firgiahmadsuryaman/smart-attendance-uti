@@ -1,6 +1,11 @@
 import pytest
 
-from app import DEMO_STUDY_PROGRAMS
+from app import DEMO_STUDY_PROGRAMS, create_app
+from app.integrations import (
+    build_identity_provider,
+    get_identity_provider,
+    identity_provider_is_sample,
+)
 from app.integrations.base import (
     IdentityNotFound,
     ProviderMisconfigured,
@@ -208,10 +213,6 @@ def test_pustik_unmappable_body_is_unavailable():
         provider.resolve_student("23312001")
 
 
-from app import create_app
-from app.integrations import build_identity_provider, identity_provider_is_sample
-
-
 def test_factory_builds_sample_provider_by_default():
     provider = build_identity_provider({})
 
@@ -251,16 +252,23 @@ def test_app_config_carries_identity_keys():
 
 
 def test_get_identity_provider_is_cached_per_app():
-    from app.integrations import get_identity_provider
-
-    app = create_app({
+    test_config = {
         "TESTING": True,
         "SECRET_KEY": "test-secret",
         "SQLALCHEMY_DATABASE_URI": "sqlite://",
         "WTF_CSRF_ENABLED": False,
-    })
+    }
+    app1 = create_app(test_config)
+    app2 = create_app(test_config)
 
-    with app.app_context():
-        assert get_identity_provider() is get_identity_provider()
+    with app1.app_context():
+        p1 = get_identity_provider()
+        assert get_identity_provider() is p1
+
+    with app2.app_context():
+        p2 = get_identity_provider()
+        assert get_identity_provider() is p2
+
+    assert p1 is not p2
 
 
