@@ -3,10 +3,12 @@ import pytest
 from app import DEMO_STUDY_PROGRAMS
 from app.integrations.base import (
     IdentityNotFound,
+    ProviderMisconfigured,
     ProviderUnavailable,
     status_label,
     status_tone,
 )
+from app.integrations.pustik import PustikIdentityProvider
 from app.integrations.sample import (
     SAMPLE_LECTURERS,
     SAMPLE_STUDENTS,
@@ -99,3 +101,109 @@ def test_status_labels_and_tones_cover_all_known_statuses():
     assert status_tone("DROPPED_OUT") == "danger"
     assert status_label("SESUATU_YANG_ANE") == "Status belum dikenali"
     assert status_tone("SESUATU_YANG_ANE") == "neutral"
+
+
+def _transport_returning(status, body):
+    def transport(url, payload, headers, timeout):
+        return status, body
+    return transport
+
+
+def _transport_raising(exc):
+    def transport(url, payload, headers, timeout):
+        raise exc
+    return transport
+
+
+def test_pustik_requires_base_url():
+    provider = PustikIdentityProvider(base_url="")
+
+    with pytest.raises(ProviderMisconfigured):
+        provider.resolve_student("23312001")
+
+
+def test_pustik_maps_response_into_identity():
+    body = {
+        "ok": True,
+        "data": {
+            "identity": {
+                "npm": "23312001",
+                "name": "Ayu Lestari",
+                "programStudy": {"name": "Informatika", "code": "IF"},
+                "faculty": {"name": "Fakultas Teknik dan Ilmu Komputer"},
+                "semester": 5,
+                "cohort": "2023",
+                "academicStatus": "aktif",
+            }
+        },
+    }
+    provider = PustikIdentityProvider(
+        base_url="https://pustik.example/api",
+        transport=_transport_returning(200, body),
+    )
+
+    identity = provider.resolve_student("23312001")
+
+    assert identity.name == "Ayu Lestari"
+    assert identity.program_name == "Informatika"
+    assert identity.program_code == "IF"
+    assert identity.faculty == "Fakultas Teknik dan Ilmu Komputer"
+    assert identity.semester == 5
+    assert identity.academic_status == "AKTIF"
+    assert provider.source_code == "PUSTIK_API"
+
+
+def test_pustik_tolerates_string_program_and_missing_faculty():
+    body = {"data": {"name": "Ayu Lestari", "programStudy": "Informatika"}}
+    provider = PustikIdentityProvider(
+        base_url="https://pustik.example/api",
+        transport=_transport_returning(200, body),
+    )
+
+    identity = provider.resolve_student("23312001")
+
+    assert identity.program_name == "Informatika"
+    assert identity.faculty is None
+    assert identity.semester is None
+    assert identity.academic_status == "UNKNOWN"
+
+
+def test_pustik_404_is_not_found():
+    provider = PustikIdentityProvider(
+        base_url="https://pustik.example/api",
+        transport=_transport_returning(404, {"message": "tidak ada"}),
+    )
+
+    with pytest.raises(IdentityNotFound):
+        provider.resolve_student("00000000")
+
+
+def test_pustik_5xx_is_unavailable():
+    provider = PustikIdentityProvider(
+        base_url="https://pustik.example/api",
+        transport=_transport_returning(503, None),
+    )
+
+    with pytest.raises(ProviderUnavailable):
+        provider.resolve_student("23312001")
+
+
+def test_pustik_transport_error_is_unavailable():
+    provider = PustikIdentityProvider(
+        base_url="https://pustik.example/api",
+        transport=_transport_raising(TimeoutError("koneksi habis")),
+    )
+
+    with pytest.raises(ProviderUnavailable):
+        provider.resolve_student("23312001")
+
+
+def test_pustik_unmappable_body_is_unavailable():
+    provider = PustikIdentityProvider(
+        base_url="https://pustik.example/api",
+        transport=_transport_returning(200, {"data": {"npm": "23312001"}}),
+    )
+
+    with pytest.raises(ProviderUnavailable):
+        provider.resolve_student("23312001")
+
