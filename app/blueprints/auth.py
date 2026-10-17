@@ -43,7 +43,13 @@ def _normalize_name(value):
 
 
 def _match_program(identity):
-    """Cocokkan hasil provider ke study_programs: kode dulu, lalu nama ternormalisasi."""
+    """Cocokkan hasil provider ke study_programs: kode dulu, lalu nama ternormalisasi.
+
+    Catatan: status `is_active` sengaja tidak disaring di sini (baik pencarian
+    berdasarkan kode maupun nama). Penonaktifan prodi adalah kurasi katalog
+    administratif dan tidak boleh memblokir pendaftaran mahasiswa dengan pesan
+    keliru bahwa prodi belum terdaftar.
+    """
     if identity.program_code:
         program = StudyProgram.query.filter(
             func.lower(StudyProgram.code) == identity.program_code.strip().lower()
@@ -52,7 +58,8 @@ def _match_program(identity):
             return program
     if identity.program_name:
         target = _normalize_name(identity.program_name)
-        for program in StudyProgram.query.filter_by(is_active=True).all():
+        # is_active sengaja tidak disaring agar konsisten dengan pencarian kode
+        for program in StudyProgram.query.all():
             if _normalize_name(program.name) == target:
                 return program
     return None

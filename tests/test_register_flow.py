@@ -1,8 +1,9 @@
 import pytest
 
 from app import create_app
+from app.blueprints.auth import _match_program
 from app.extensions import db
-from app.integrations.base import ProviderUnavailable
+from app.integrations.base import Identity, ProviderUnavailable
 from app.models import StudyProgram, User
 from app.utils import reset_rate_limit
 
@@ -131,3 +132,63 @@ def test_rate_limited_request_does_not_crash_with_invalid_identifier(app, client
     response = client.post("/register/check", data={"jenis": "mahasiswa", "npm": "!!!bad!!!"})
 
     assert response.status_code == 429
+
+
+def test_check_matches_inactive_program_by_name_and_code(app, client):
+    # 1. Program tidak aktif tetap cocok berdasarkan nama saat kode berbeda/tidak cocok
+    with app.app_context():
+        prog_name = StudyProgram(
+            name="Teknik Robotika",
+            code="TRB_DIFF",
+            faculty="Fakultas Teknik dan Ilmu Komputer",
+            is_active=False,
+        )
+        db.session.add(prog_name)
+        db.session.commit()
+
+        matched_direct_name = _match_program(Identity(
+            kind="student",
+            identifier="23312003",
+            name="Citra Maharani",
+            program_name="Teknik Robotika",
+            program_code=None,
+            academic_status="ACTIVE",
+        ))
+        assert matched_direct_name is not None
+        assert matched_direct_name.id == prog_name.id
+
+    response = client.post("/register/check", data={"jenis": "mahasiswa", "npm": "23312003"})
+    body = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert "Citra Maharani" in body
+    assert "belum terdaftar" not in body
+
+    # 2. Program tidak aktif juga tetap cocok berdasarkan kode
+    with app.app_context():
+        db.session.delete(db.session.get(StudyProgram, prog_name.id))
+        prog_code = StudyProgram(
+            name="Nama Lain di Database",
+            code="TRB",
+            faculty="Fakultas Teknik dan Ilmu Komputer",
+            is_active=False,
+        )
+        db.session.add(prog_code)
+        db.session.commit()
+
+        matched_direct_code = _match_program(Identity(
+            kind="student",
+            identifier="23312003",
+            name="Citra Maharani",
+            program_name=None,
+            program_code="TRB",
+            academic_status="ACTIVE",
+        ))
+        assert matched_direct_code is not None
+        assert matched_direct_code.id == prog_code.id
+
+    response = client.post("/register/check", data={"jenis": "mahasiswa", "npm": "23312003"})
+    body = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert "Citra Maharani" in body
+    assert "belum terdaftar" not in body
+
