@@ -101,6 +101,7 @@
     const url = row.querySelector('.online-url-field input');
     room.disabled = false; room.readOnly = isOnline; room.required = !isOnline;
     if (isOnline) room.value = 'Online'; else if (room.value === 'Online') room.value = '';
+    if (!isOnline) url.value = '';
     url.disabled = false; url.closest('.online-url-field').classList.toggle('d-none', !isOnline);
   }
   function updateAllSlots() { list.querySelectorAll('.slot-row').forEach(updateSlot); }
