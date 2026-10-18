@@ -239,14 +239,18 @@ def _time_or_error(value):
     return datetime.strptime(value, "%H:%M").time()
 
 
-def _submitted_schedule_slots(delivery_mode, default_room=""):
-    """Parse one or more weekly schedule rows from a repeated form."""
+def _submitted_schedule_slots(delivery_mode="OFFLINE", default_room=""):
+    """Parse weekly slots with their own online/offline mode; supports older single-mode forms."""
     weekdays = request.form.getlist("weekday[]") or ([request.form.get("weekday")] if request.form.get("weekday") is not None else [])
     starts = request.form.getlist("start_time[]") or ([request.form.get("start_time")] if request.form.get("start_time") else [])
     ends = request.form.getlist("end_time[]") or ([request.form.get("end_time")] if request.form.get("end_time") else [])
     rooms = request.form.getlist("room[]") or ([request.form.get("room", "")] if weekdays else [])
+    modes = request.form.getlist("delivery_mode[]")
+    urls = request.form.getlist("online_url[]")
+    legacy_mode = (request.form.get("delivery_mode") or delivery_mode or "OFFLINE").upper()
+    legacy_url = (request.form.get("online_url") or "").strip() or None
     slots = []
-    max_rows = max(len(weekdays), len(starts), len(ends), len(rooms))
+    max_rows = max(len(weekdays), len(starts), len(ends), len(rooms), len(modes), len(urls))
     for index in range(max_rows):
         weekday_value = weekdays[index] if index < len(weekdays) else ""
         start_value = starts[index] if index < len(starts) else ""
@@ -254,6 +258,13 @@ def _submitted_schedule_slots(delivery_mode, default_room=""):
         room_value = rooms[index] if index < len(rooms) else ""
         if not str(weekday_value).strip() and not str(start_value).strip() and not str(end_value).strip():
             continue
+        mode = (modes[index] if index < len(modes) else legacy_mode).upper()
+        online_url = (urls[index] if index < len(urls) else legacy_url) or ""
+        online_url = online_url.strip() or None
+        if mode not in ("ONLINE", "OFFLINE"):
+            raise ValueError("Pilih moda online atau tatap muka pada setiap slot.")
+        if mode == "ONLINE" and online_url and not online_url.lower().startswith(("https://", "http://")):
+            raise ValueError("Tautan meeting online harus menggunakan http:// atau https://.")
         try:
             weekday = int(weekday_value)
             start_time = _time_or_error(start_value)
@@ -261,13 +272,14 @@ def _submitted_schedule_slots(delivery_mode, default_room=""):
         except (ValueError, TypeError):
             raise ValueError("Setiap slot jadwal harus memiliki hari, jam mulai, dan jam selesai yang valid.")
         room = (room_value or default_room or "").strip()
-        if delivery_mode == "ONLINE":
-            room = room or "Online"
+        if mode == "ONLINE":
+            room = "Online"
         if weekday not in range(7) or start_time >= end_time:
             raise ValueError("Hari dan rentang jam pada jadwal tidak valid.")
-        if delivery_mode == "OFFLINE" and not room:
+        if mode == "OFFLINE" and not room:
             raise ValueError("Ruang wajib diisi untuk perkuliahan tatap muka.")
-        slots.append({"weekday": weekday, "start_time": start_time, "end_time": end_time, "room": room or "Online"})
+        slots.append({"weekday": weekday, "start_time": start_time, "end_time": end_time,
+                      "room": room or "Online", "delivery_mode": mode, "online_url": online_url if mode == "ONLINE" else None})
     if not slots:
         raise ValueError("Tambahkan minimal satu slot jadwal mingguan.")
     for index, one in enumerate(slots):
@@ -275,6 +287,15 @@ def _submitted_schedule_slots(delivery_mode, default_room=""):
             if one["weekday"] == other["weekday"] and one["start_time"] < other["end_time"] and other["start_time"] < one["end_time"]:
                 raise ValueError("Dua slot jadwal pada hari yang sama saling bertabrakan.")
     return slots
+
+
+def _aggregate_delivery_mode(slots):
+    modes = {slot["delivery_mode"] for slot in slots}
+    return next(iter(modes)) if len(modes) == 1 else "MIXED"
+
+
+def _legacy_online_url(slots):
+    return next((slot["online_url"] for slot in slots if slot["delivery_mode"] == "ONLINE" and slot.get("online_url")), None)
 
 
 def _find_schedule_conflict(semester_id, weekday, start_time, end_time, room, lecturer_id, exclude_offering_id=None,
@@ -288,7 +309,8 @@ def _find_schedule_conflict(semester_id, weekday, start_time, end_time, room, le
         overlaps = start_time < existing.end_time and existing.start_time < end_time
         if not overlaps:
             continue
-        same_mode = (existing.offering.delivery_mode or "OFFLINE") == delivery_mode
+        existing_mode = getattr(existing, "delivery_mode", None) or existing.offering.delivery_mode or "OFFLINE"
+        same_mode = existing_mode == delivery_mode
         if delivery_mode == "OFFLINE" and same_mode and existing.room.strip().casefold() == room.strip().casefold():
             return f"Ruang {room} bentrok dengan {existing.offering.course.code} {existing.offering.class_code} pada waktu yang sama."
         if existing.offering.lecturer_id == lecturer_id:
@@ -296,10 +318,10 @@ def _find_schedule_conflict(semester_id, weekday, start_time, end_time, room, le
     return None
 
 
-def _validate_slots(semester, lecturer, slots, delivery_mode, exclude_offering_id=None):
+def _validate_slots(semester, lecturer, slots, delivery_mode=None, exclude_offering_id=None):
     for slot in slots:
         conflict = _find_schedule_conflict(semester.id, slot["weekday"], slot["start_time"], slot["end_time"],
-                                           slot["room"], lecturer.id, exclude_offering_id, delivery_mode)
+                                           slot["room"], lecturer.id, exclude_offering_id, slot["delivery_mode"])
         if conflict:
             raise ValueError(conflict)
 
@@ -346,12 +368,12 @@ def offerings():
                     raise ValueError("Pilih mata kuliah aktif dari katalog atau lengkapi data mata kuliah baru.")
             if not semester or not lecturer or lecturer.role != "lecturer" or not class_code:
                 raise ValueError("Lengkapi semester, dosen, dan kode kelas.")
-            if capacity < 1 or delivery_mode not in ("OFFLINE", "ONLINE"):
-                raise ValueError("Kapasitas atau mode perkuliahan tidak valid.")
-            if delivery_mode == "ONLINE" and online_url and not online_url.lower().startswith(("https://", "http://")):
-                raise ValueError("Tautan kuliah online harus menggunakan http:// atau https://.")
+            if capacity < 1:
+                raise ValueError("Kapasitas kelas harus minimal satu.")
             slots = _submitted_schedule_slots(delivery_mode)
-            _validate_slots(semester, lecturer, slots, delivery_mode)
+            _validate_slots(semester, lecturer, slots)
+            delivery_mode = _aggregate_delivery_mode(slots)
+            online_url = _legacy_online_url(slots)
             offering = ClassOffering(course=course, semester=semester, lecturer=lecturer,
                 class_code=class_code, capacity=capacity, status="OPEN", delivery_mode=delivery_mode,
                 online_url=online_url, created_by_id=current_user.id)
@@ -383,12 +405,12 @@ def edit_offering(offering_id):
             status = request.form.get("status", "OPEN")
             delivery_mode = (request.form.get("delivery_mode") or "OFFLINE").upper()
             online_url = (request.form.get("online_url") or "").strip() or None
-            if not lecturer or lecturer.role != "lecturer" or not class_code or capacity < 1 or status not in ("OPEN", "CLOSED") or delivery_mode not in ("OFFLINE", "ONLINE"):
+            if not lecturer or lecturer.role != "lecturer" or not class_code or capacity < 1 or status not in ("OPEN", "CLOSED"):
                 raise ValueError("Periksa kembali data kelas.")
-            if delivery_mode == "ONLINE" and online_url and not online_url.lower().startswith(("https://", "http://")):
-                raise ValueError("Tautan kuliah online harus menggunakan http:// atau https://.")
             slots = _submitted_schedule_slots(delivery_mode)
-            _validate_slots(offering.semester, lecturer, slots, delivery_mode, exclude_offering_id=offering.id)
+            _validate_slots(offering.semester, lecturer, slots, exclude_offering_id=offering.id)
+            delivery_mode = _aggregate_delivery_mode(slots)
+            online_url = _legacy_online_url(slots)
             offering.lecturer_id = lecturer.id
             offering.class_code = class_code
             offering.capacity = capacity
