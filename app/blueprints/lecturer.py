@@ -513,7 +513,8 @@ def download_schedule_pdf():
     rows.sort(key=lambda row: (row[1].weekday, row[1].start_time))
     data = [[slot.weekday_name, f"{slot.start_time:%H:%M}–{slot.end_time:%H:%M}", offering.course.code,
              offering.course.name, offering.class_code, f"{offering.course.credits} SKS",
-             offering.delivery_mode_label, offering.lecturer.full_name, slot.room]
+             slot.delivery_mode_label, offering.lecturer.full_name,
+             (slot.room + (" · " + slot.online_url if slot.delivery_mode == "ONLINE" and slot.online_url else ""))]
             for offering, slot in rows]
     return _build_pdf("Jadwal Mengajar Dosen", [("Dosen", current_user.full_name), ("Semester", selected.name if selected else "Semua Semester")],
                       ["Hari", "Jam", "Kode", "Mata Kuliah", "Kelas", "SKS", "Moda", "Dosen", "Ruang/Online"], data,
@@ -535,8 +536,8 @@ def download_schedule_xlsx():
         for slot in offering.schedules:
             rows.append([slot.weekday_name, slot.start_time.strftime("%H:%M"), slot.end_time.strftime("%H:%M"),
                 offering.course.code, offering.course.name, offering.class_code, offering.course.credits,
-                offering.course.course_type, offering.delivery_mode_label, offering.lecturer.full_name,
-                slot.room, offering.online_url or "-"])
+                offering.course.course_type, slot.delivery_mode_label, offering.lecturer.full_name,
+                slot.room, slot.online_url or "-"])
     rows.sort(key=lambda row: (WEEKDAY_NAMES.index(row[0]), row[1]))
     return _build_xlsx("Jadwal Mengajar Dosen", [("Dosen", current_user.full_name), ("Semester", selected.name if selected else "Semua Semester")],
                        ["Hari", "Mulai", "Selesai", "Kode", "Mata Kuliah", "Kelas", "SKS", "W/P", "Moda", "Dosen", "Ruang", "Tautan Online"],
