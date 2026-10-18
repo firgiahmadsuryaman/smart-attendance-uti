@@ -31,6 +31,16 @@ SAMPLE_STUDENTS = {
         "academic_status": "ACTIVE",
         "expects_unregistered_program": True,
     },
+    # Data uji yang diminta pemilik proyek; hanya aktif pada IDENTITY_PROVIDER=sample.
+    "23312237": {
+        "name": "Firgi Ahmad Suryaman",
+        "program_name": "Informatika",
+        "program_code": "IF",
+        "faculty": "Fakultas Teknik dan Ilmu Komputer",
+        "semester": 7,
+        "cohort": "2023",
+        "academic_status": "ACTIVE",
+    },
 }
 
 SAMPLE_LECTURERS = {
