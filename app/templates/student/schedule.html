@@ -18,7 +18,7 @@
     <div class="schedule-item">
       <div class="schedule-time">{{ slot.start_time.strftime('%H:%M') }}–{{ slot.end_time.strftime('%H:%M') }}<small>{{ offering.class_code }} · {{ offering.course.credits }} SKS</small></div>
       <div class="schedule-main"><strong>{{ offering.course.name }}</strong><small>{{ offering.course.code }} · {{ offering.course.program.name }} · Semester kurikulum {{ offering.course.recommended_semester or '-' }}</small><small>{{ offering.lecturer.full_name }} · {{ offering.course.course_type }} ({{ 'Wajib' if offering.course.course_type == 'W' else 'Pilihan' }})</small></div>
-      <div class="schedule-room"><span class="badge-mode {{ 'online' if offering.delivery_mode == 'ONLINE' else 'offline' }}">{{ offering.delivery_mode_label }}</span><small>{{ slot.room }}</small>{% if offering.online_url %}<a href="{{ offering.online_url }}" target="_blank" rel="noopener" class="secondary-text">Buka tautan</a>{% endif %}</div>
+      <div class="schedule-room"><span class="badge-mode {{ 'online' if slot.delivery_mode == 'ONLINE' else 'offline' }}">{{ slot.delivery_mode_label }}</span><small>{{ slot.room }}</small>{% if slot.online_url %}<a href="{{ slot.online_url }}" target="_blank" rel="noopener" class="secondary-text">Buka tautan</a>{% endif %}</div>
     </div>
     {% if loop.last %}</div>{% endif %}
   {% endfor %}
