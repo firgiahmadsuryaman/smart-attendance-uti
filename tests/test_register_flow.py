@@ -57,8 +57,8 @@ def test_check_returns_requested_firgi_sample_identity(client):
     assert "Firgi Ahmad Suryaman" in body
     assert "Informatika" in body
     assert "Fakultas Teknik dan Ilmu Komputer" in body
-    assert "7" in body
-    assert "2023" in body
+    assert "<small>Semester</small><strong>7</strong>" in body
+    assert "<small>Angkatan</small><strong>2023</strong>" in body
 
 
 def test_registration_stores_requested_firgi_sample_identity(app, client):
