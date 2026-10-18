@@ -224,7 +224,7 @@ Mahasiswa membuka sesi melalui QR/token, mengambil sampel mata terbuka dan saat 
 
 1. Admin menyiapkan semester dan daftar program studi.
 2. Admin atau dosen membuat/memilih mata kuliah dan membuka penawaran kelas.
-3. Penawaran memuat semester, kelas, dosen, moda perkuliahan, dan satu atau beberapa slot jadwal mingguan.
+3. Penawaran memuat semester, kelas, dosen, dan satu atau beberapa slot jadwal mingguan. Setiap slot dapat diatur sebagai **online** atau **tatap muka** secara mandiri, termasuk satu kelas yang memiliki satu pertemuan online dan satu pertemuan tatap muka.
 4. Mahasiswa mendaftar menggunakan NPM, nama, email, program studi, password, dan angkatan opsional. Form tidak meminta kelas, nomor HP, atau wajah.
 5. Setelah login, mahasiswa mendaftarkan wajah dari dashboard.
 6. Mahasiswa memilih kelas yang dibuka untuk program studi dan semester aktifnya.
@@ -260,6 +260,7 @@ Akun data contoh yang dapat dipakai menguji:
 | `23312001` | NPM | Informatika, semester 5, angkatan 2023, aktif |
 | `23312002` | NPM | Informatika, status Lulus — pendaftaran ditolak |
 | `23312003` | NPM | Program studi tidak terdaftar — pendaftaran ditolak |
+| `23312237` | NPM | Firgi Ahmad Suryaman, Informatika, Fakultas Teknik dan Ilmu Komputer, semester 7, angkatan 2023, aktif |
 | `0012345678` | NIK | Dosen Informatika, aktif |
 | `99999999` | keduanya | Menyimulasikan gangguan pada sumber identitas |
 
@@ -270,8 +271,9 @@ dikonfirmasi. Pemetaan responsnya masih berdasarkan dugaan; lihat
 ### Perubahan skema setelah migrasi diaktifkan
 
 Database tidak lagi disiapkan dengan `init-db` untuk perubahan lanjutan. Repositori saat ini
-memiliki dua revisi migrasi: revisi dasar skema awal (`b3af04b5297f`) dan penambahan kolom
-identitas (`8f09cae67180`), sehingga instalasi baru dapat langsung memakai `flask db upgrade`.
+memiliki tiga revisi migrasi: skema dasar (`b3af04b5297f`), kolom identitas (`8f09cae67180`),
+dan moda serta tautan pada setiap slot jadwal (`d9c2b7e4a610`). Instalasi baru dapat memakai
+`flask db upgrade` untuk membuat skema terkini.
 Perintah di bawah mengasumsikan virtual environment sudah aktif. Setelah mengubah model:
 
 ```bash
@@ -322,7 +324,7 @@ Untuk database baru, `flask db upgrade` adalah jalur yang digunakan; `init-db` t
 
 1. Buat Admin, jalankan aplikasi, dan login.
 2. Pastikan 15 program studi tersedia setelah `seed-demo`.
-3. Buat akun dosen, lalu dosen membuat penawaran kelas dengan dua slot jadwal pada minggu yang sama.
+3. Buat akun dosen, lalu buat penawaran kelas dengan dua slot jadwal pada minggu yang sama; uji satu slot **Tatap muka** dengan ruang, dan slot kedua **Online** dengan tautan meeting.
 4. Buat akun mahasiswa dengan program studi sama; mahasiswa mengajukan kelas.
 5. Admin menyetujui pengajuan dan periksa bahwa jadwal muncul di dashboard mahasiswa.
 6. Unduh PDF/Excel mahasiswa dan PDF/Excel jadwal dosen.

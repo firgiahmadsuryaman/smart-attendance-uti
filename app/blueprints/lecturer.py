@@ -33,32 +33,46 @@ def _parse_time(value):
     return datetime.strptime(value, "%H:%M").time()
 
 
-def _slots_from_form(delivery_mode):
+def _slots_from_form(delivery_mode="OFFLINE"):
     weekdays = request.form.getlist("weekday[]")
     starts = request.form.getlist("start_time[]")
     ends = request.form.getlist("end_time[]")
     rooms = request.form.getlist("room[]")
+    modes = request.form.getlist("delivery_mode[]")
+    urls = request.form.getlist("online_url[]")
+    legacy_mode = (request.form.get("delivery_mode") or delivery_mode or "OFFLINE").upper()
+    legacy_url = (request.form.get("online_url") or "").strip() or None
     slots = []
-    for i in range(max(len(weekdays), len(starts), len(ends), len(rooms))):
+    count = max(len(weekdays), len(starts), len(ends), len(rooms), len(modes), len(urls))
+    for i in range(count):
         wd = weekdays[i] if i < len(weekdays) else ""
         start = starts[i] if i < len(starts) else ""
         end = ends[i] if i < len(ends) else ""
         room = rooms[i] if i < len(rooms) else ""
         if not str(wd).strip() and not str(start).strip() and not str(end).strip():
             continue
+        mode = (modes[i] if i < len(modes) else legacy_mode).upper()
+        online_url = (urls[i] if i < len(urls) else legacy_url) or ""
+        online_url = online_url.strip() or None
+        if mode not in ("ONLINE", "OFFLINE"):
+            raise ValueError("Pilih moda online atau tatap muka pada setiap slot.")
+        if mode == "ONLINE" and online_url and not online_url.lower().startswith(("https://", "http://")):
+            raise ValueError("Tautan meeting online harus dimulai dengan http:// atau https://.")
         try:
             weekday = int(wd)
             start_time, end_time = _parse_time(start), _parse_time(end)
         except (ValueError, TypeError):
             raise ValueError("Setiap slot jadwal wajib memiliki hari, jam mulai, dan jam selesai yang valid.")
         room = (room or "").strip()
-        if delivery_mode == "ONLINE":
-            room = room or "Online"
+        if mode == "ONLINE":
+            room = "Online"
         if weekday not in range(7) or start_time >= end_time:
             raise ValueError("Hari atau rentang waktu jadwal tidak valid.")
-        if delivery_mode == "OFFLINE" and not room:
+        if mode == "OFFLINE" and not room:
             raise ValueError("Ruang wajib diisi untuk kelas tatap muka.")
-        slots.append({"weekday": weekday, "start_time": start_time, "end_time": end_time, "room": room or "Online"})
+        slots.append({"weekday": weekday, "start_time": start_time, "end_time": end_time,
+                      "room": room or "Online", "delivery_mode": mode,
+                      "online_url": online_url if mode == "ONLINE" else None})
     if not slots:
         raise ValueError("Tambahkan minimal satu jadwal mingguan.")
     for i, one in enumerate(slots):
@@ -68,7 +82,16 @@ def _slots_from_form(delivery_mode):
     return slots
 
 
-def _validate_conflicts(semester_id, lecturer_id, slots, delivery_mode, exclude_offering_id=None):
+def _aggregate_delivery_mode(slots):
+    modes = {slot["delivery_mode"] for slot in slots}
+    return next(iter(modes)) if len(modes) == 1 else "MIXED"
+
+
+def _legacy_online_url(slots):
+    return next((slot["online_url"] for slot in slots if slot["delivery_mode"] == "ONLINE" and slot.get("online_url")), None)
+
+
+def _validate_conflicts(semester_id, lecturer_id, slots, delivery_mode=None, exclude_offering_id=None):
     query = ClassSchedule.query.join(ClassOffering).filter(ClassOffering.semester_id == semester_id)
     if exclude_offering_id:
         query = query.filter(ClassOffering.id != exclude_offering_id)
@@ -82,7 +105,8 @@ def _validate_conflicts(semester_id, lecturer_id, slots, delivery_mode, exclude_
                 continue
             if existing.offering.lecturer_id == lecturer_id:
                 raise ValueError(f"Jadwal bentrok: Anda sudah mengajar {existing.offering.course.code} {existing.offering.class_code} pada waktu tersebut.")
-            if delivery_mode == "OFFLINE" and (existing.offering.delivery_mode or "OFFLINE") == "OFFLINE" and existing.room.casefold() == slot["room"].casefold():
+            existing_mode = getattr(existing, "delivery_mode", None) or existing.offering.delivery_mode or "OFFLINE"
+            if slot["delivery_mode"] == "OFFLINE" and existing_mode == "OFFLINE" and existing.room.casefold() == slot["room"].casefold():
                 raise ValueError(f"Ruang {slot['room']} sudah digunakan oleh kelas {existing.offering.course.code} {existing.offering.class_code} pada waktu tersebut.")
 
 
@@ -321,12 +345,12 @@ def add_teaching():
                     raise ValueError("Pilih mata kuliah aktif dari katalog.")
             if not semester or not semester.is_active:
                 raise ValueError("Pilih semester akademik yang aktif.")
-            if not class_code or capacity < 1 or delivery_mode not in ("OFFLINE", "ONLINE"):
-                raise ValueError("Kode kelas, kapasitas, dan moda perkuliahan wajib valid.")
-            if delivery_mode == "ONLINE" and online_url and not online_url.lower().startswith(("https://", "http://")):
-                raise ValueError("Tautan online harus dimulai dengan http:// atau https://.")
+            if not class_code or capacity < 1:
+                raise ValueError("Kode kelas dan kapasitas harus valid.")
             slots = _slots_from_form(delivery_mode)
-            _validate_conflicts(semester.id, current_user.id, slots, delivery_mode)
+            _validate_conflicts(semester.id, current_user.id, slots)
+            delivery_mode = _aggregate_delivery_mode(slots)
+            online_url = _legacy_online_url(slots)
             offering = ClassOffering(course=course, semester=semester, lecturer=current_user,
                                      class_code=class_code, capacity=capacity, status="OPEN",
                                      delivery_mode=delivery_mode, online_url=online_url,
@@ -489,7 +513,8 @@ def download_schedule_pdf():
     rows.sort(key=lambda row: (row[1].weekday, row[1].start_time))
     data = [[slot.weekday_name, f"{slot.start_time:%H:%M}–{slot.end_time:%H:%M}", offering.course.code,
              offering.course.name, offering.class_code, f"{offering.course.credits} SKS",
-             offering.delivery_mode_label, offering.lecturer.full_name, slot.room]
+             slot.delivery_mode_label, offering.lecturer.full_name,
+             (slot.room + (" · " + slot.online_url if slot.delivery_mode == "ONLINE" and slot.online_url else ""))]
             for offering, slot in rows]
     return _build_pdf("Jadwal Mengajar Dosen", [("Dosen", current_user.full_name), ("Semester", selected.name if selected else "Semua Semester")],
                       ["Hari", "Jam", "Kode", "Mata Kuliah", "Kelas", "SKS", "Moda", "Dosen", "Ruang/Online"], data,
@@ -511,8 +536,8 @@ def download_schedule_xlsx():
         for slot in offering.schedules:
             rows.append([slot.weekday_name, slot.start_time.strftime("%H:%M"), slot.end_time.strftime("%H:%M"),
                 offering.course.code, offering.course.name, offering.class_code, offering.course.credits,
-                offering.course.course_type, offering.delivery_mode_label, offering.lecturer.full_name,
-                slot.room, offering.online_url or "-"])
+                offering.course.course_type, slot.delivery_mode_label, offering.lecturer.full_name,
+                slot.room, slot.online_url or "-"])
     rows.sort(key=lambda row: (WEEKDAY_NAMES.index(row[0]), row[1]))
     return _build_xlsx("Jadwal Mengajar Dosen", [("Dosen", current_user.full_name), ("Semester", selected.name if selected else "Semua Semester")],
                        ["Hari", "Mulai", "Selesai", "Kode", "Mata Kuliah", "Kelas", "SKS", "W/P", "Moda", "Dosen", "Ruang", "Tautan Online"],

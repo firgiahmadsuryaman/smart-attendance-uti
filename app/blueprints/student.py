@@ -7,7 +7,7 @@ from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
 from ..extensions import db
-from ..models import (User, StudyProgram, Semester, ClassOffering, CourseEnrollment, FaceProfile,
+from ..models import (User, StudyProgram, Semester, ClassOffering, ClassSchedule, CourseEnrollment, FaceProfile,
                       AttendanceSession, Attendance, Notification)
 from ..utils import role_required, log_action, get_active_semester
 from ..face_engine import (extract_embedding, compare_embedding, FaceEngineError,
@@ -138,7 +138,7 @@ def courses():
         if selected_type in ("W", "P"):
             query = query.filter(Course.course_type == selected_type)
         if selected_mode in ("ONLINE", "OFFLINE"):
-            query = query.filter(ClassOffering.delivery_mode == selected_mode)
+            query = query.filter(ClassOffering.schedules.any(ClassSchedule.delivery_mode == selected_mode))
         if search:
             term = f"%{search}%"
             query = query.filter(or_(
@@ -228,12 +228,12 @@ def download_schedule_pdf():
         data = [[Paragraph(escape(item), header_style) for item in headers]]
         for offering, slot in schedule_rows:
             room_info = escape(slot.room or "-")
-            if offering.delivery_mode == "ONLINE" and offering.online_url:
-                room_info += "<br/><font color='#2456A6'>" + escape(offering.online_url) + "</font>"
+            if slot.delivery_mode == "ONLINE" and slot.online_url:
+                room_info += "<br/><font color='#2456A6'>" + escape(slot.online_url) + "</font>"
             row = [slot.weekday_name, f"{slot.start_time:%H:%M}–{slot.end_time:%H:%M}", offering.course.code,
                    offering.course.name, offering.class_code, offering.course.course_type,
                    str(offering.course.credits), offering.lecturer.full_name,
-                   offering.delivery_mode_label, room_info]
+                   slot.delivery_mode_label, room_info]
             data.append([Paragraph(escape(str(value)), cell_style) if index != 9 else Paragraph(str(value), cell_style)
                          for index, value in enumerate(row)])
         if len(data) == 1:
@@ -304,8 +304,8 @@ def download_schedule_xlsx():
     for offering, slot in schedule_rows:
         sheet.append([slot.weekday_name, slot.start_time.strftime("%H:%M"), slot.end_time.strftime("%H:%M"),
                       offering.course.code, offering.course.name, offering.class_code, offering.course.course_type,
-                      offering.course.credits, offering.lecturer.full_name, offering.delivery_mode_label,
-                      slot.room, offering.online_url or "-"])
+                      offering.course.credits, offering.lecturer.full_name, slot.delivery_mode_label,
+                      slot.room, slot.online_url or "-"])
     thin = Side(style="thin", color="DCE4EF")
     for row in sheet.iter_rows(min_row=3, max_row=sheet.max_row, min_col=1, max_col=12):
         for cell in row:

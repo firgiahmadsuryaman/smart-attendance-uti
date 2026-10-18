@@ -49,6 +49,36 @@ def test_check_returns_card_with_provider_name(client):
     assert "Informatika" in response.get_data(as_text=True)
 
 
+def test_check_returns_requested_firgi_sample_identity(client):
+    response = client.post("/register/check", data={"jenis": "mahasiswa", "npm": "23312237"})
+
+    body = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert "Firgi Ahmad Suryaman" in body
+    assert "Informatika" in body
+    assert "Fakultas Teknik dan Ilmu Komputer" in body
+    assert "<small>Semester</small><strong>7</strong>" in body
+    assert "<small>Angkatan</small><strong>2023</strong>" in body
+
+
+def test_registration_stores_requested_firgi_sample_identity(app, client):
+    response = _register(
+        client, "/register/student",
+        jenis="mahasiswa", npm="23312237",
+        email="firgi.sample@example.com", password="uji-firgi-123",
+        password_confirm="uji-firgi-123",
+    )
+
+    assert response.status_code == 302
+    with app.app_context():
+        user = User.query.filter_by(npm="23312237").one()
+        assert user.full_name == "Firgi Ahmad Suryaman"
+        assert user.program.code == "IF"
+        assert user.program.faculty == "Fakultas Teknik dan Ilmu Komputer"
+        assert user.cohort == "2023"
+        assert user.identity_source == "SAMPLE"
+
+
 def test_check_unknown_identifier_returns_not_found_message(client):
     response = client.post("/register/check", data={"jenis": "mahasiswa", "npm": "00000000"})
 

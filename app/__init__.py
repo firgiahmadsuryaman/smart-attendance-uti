@@ -151,11 +151,17 @@ def create_app(test_config=None):
         programs = DEMO_STUDY_PROGRAMS
         for code, name in programs:
             existing = StudyProgram.query.filter(or_(StudyProgram.code == code, StudyProgram.name == name)).first()
+            faculty = ("Fakultas Teknik dan Ilmu Komputer"
+                       if code in {"SI", "IF", "TI", "TS", "TE", "TK", "IK"}
+                       else "Universitas Teknokrat Indonesia")
             if not existing:
                 db.session.add(StudyProgram(
-                    code=code, name=name,
-                    faculty="Universitas Teknokrat Indonesia", is_active=True
+                    code=code, name=name, faculty=faculty, is_active=True
                 ))
+            elif code == "IF" and existing.faculty in (None, "", "Universitas Teknokrat Indonesia"):
+                # Repair the generic placeholder from earlier seed-demo runs without
+                # overwriting a faculty value that an administrator already curated.
+                existing.faculty = "Fakultas Teknik dan Ilmu Komputer"
         semester = Semester.query.filter_by(name="Ganjil 2026/2027").first()
         if not semester:
             semester = Semester(name="Ganjil 2026/2027", academic_year="2026/2027", term="Ganjil",
