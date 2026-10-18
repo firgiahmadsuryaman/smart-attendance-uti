@@ -48,10 +48,9 @@
 
         <div class="form-section-title"><i class="bi bi-calendar2-check"></i>Informasi penawaran kelas</div>
         <div class="field-grid mb-3"><div><label class="form-label">Semester akademik</label><select class="form-select" name="semester_id" required><option value="">Pilih semester</option>{% for s in semesters %}<option value="{{ s.id }}" {% if s.is_active %}selected{% endif %}>{{ s.name }}{% if s.is_active %} · Aktif{% endif %}</option>{% endfor %}</select></div><div><label class="form-label">Kode kelas</label><input class="form-control" name="class_code" placeholder="IF26A - GEL 1" required></div><div><label class="form-label">Dosen pengampu</label><select class="form-select" name="lecturer_id" required><option value="">Pilih dosen</option>{% for l in lecturers %}<option value="{{ l.id }}">{{ l.full_name }}{% if l.employee_id %} · {{ l.employee_id }}{% endif %}</option>{% endfor %}</select></div><div><label class="form-label">Kapasitas peserta</label><input class="form-control" type="number" name="capacity" min="1" max="500" value="40" required></div></div>
-        <div class="field-grid mb-3"><div><label class="form-label" for="deliveryMode">Moda perkuliahan</label><select class="form-select" name="delivery_mode" id="deliveryMode"><option value="OFFLINE">Tatap muka</option><option value="ONLINE">Online</option></select></div><div><label class="form-label" for="onlineUrl">Tautan online (opsional)</label><input class="form-control" name="online_url" id="onlineUrl" type="url" placeholder="https://meet.google.com/..." disabled></div></div>
-        <div class="mode-note mb-3" id="modeNote">Tatap muka membutuhkan ruang. Setiap jadwal dapat menggunakan ruang yang berbeda.</div>
+        <div class="callout mb-3"><i class="bi bi-info-circle"></i><div>Moda kuliah dipilih pada setiap slot jadwal, sehingga pertemuan pertama bisa tatap muka dan pertemuan kedua online. Ruang dan tautan meeting diisi sesuai moda pada baris masing-masing.</div></div>
         <div class="form-section-title"><i class="bi bi-calendar-week"></i>Jadwal mingguan</div>
-        <div class="slot-list" id="slotList"><div class="slot-row"><div><label>Hari</label><select class="form-select" name="weekday[]" required>{% for value,label in weekdays %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div><div><label>Jam mulai</label><input class="form-control" type="time" name="start_time[]" required></div><div><label>Jam selesai</label><input class="form-control" type="time" name="end_time[]" required></div><div class="room-field"><label>Ruang</label><input class="form-control" name="room[]" placeholder="B3.1"></div><button class="slot-remove" type="button" title="Hapus jadwal" disabled><i class="bi bi-trash"></i></button></div></div>
+        <div class="slot-list" id="slotList"><div class="slot-row"><div><label>Hari</label><select class="form-select" name="weekday[]" required>{% for value,label in weekdays %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div><div><label>Jam mulai</label><input class="form-control" type="time" name="start_time[]" required></div><div><label>Jam selesai</label><input class="form-control" type="time" name="end_time[]" required></div><div><label>Moda</label><select class="form-select slot-mode" name="delivery_mode[]"><option value="OFFLINE">Tatap muka</option><option value="ONLINE">Online</option></select></div><div class="room-field"><label>Ruang</label><input class="form-control" name="room[]" placeholder="B3.1"></div><div class="online-url-field"><label>Tautan meeting</label><input class="form-control" type="url" name="online_url[]" placeholder="https://meet.google.com/..."></div><button class="slot-remove" type="button" title="Hapus jadwal" disabled><i class="bi bi-trash"></i></button></div></div>
         <button class="slot-add mt-2 mb-4" id="addSlot" type="button"><i class="bi bi-plus-circle me-1"></i>Tambah pertemuan mingguan</button>
         <button class="btn btn-primary w-100"><i class="bi bi-check2-circle me-1"></i>Simpan penawaran kelas</button>
       </form>
@@ -75,9 +74,6 @@
   const program = document.getElementById('programFilter');
   const semester = document.getElementById('catalogSemesterFilter');
   const search = document.getElementById('courseSearch');
-  const mode = document.getElementById('deliveryMode');
-  const online = document.getElementById('onlineUrl');
-  const note = document.getElementById('modeNote');
   const list = document.getElementById('slotList');
   const add = document.getElementById('addSlot');
   function swapEntry() {
@@ -99,28 +95,27 @@
     });
     if (course.selectedOptions[0]?.hidden) course.value = '';
   }
-  function updateMode() {
-    const isOnline = mode.value === 'ONLINE';
-    online.disabled = !isOnline;
-    document.querySelectorAll('#slotList .room-field input').forEach((field) => {
-      field.disabled = isOnline; field.required = !isOnline;
-      if (isOnline) field.value = 'Online'; else if (field.value === 'Online') field.value = '';
-    });
-    note.classList.toggle('online', isOnline);
-    note.textContent = isOnline ? 'Kuliah online tidak memerlukan ruang fisik. Masukkan URL meeting bila tersedia.' : 'Kuliah tatap muka membutuhkan ruang fisik untuk setiap slot.';
+  function updateSlot(row) {
+    const isOnline = row.querySelector('.slot-mode').value === 'ONLINE';
+    const room = row.querySelector('.room-field input');
+    const url = row.querySelector('.online-url-field input');
+    room.disabled = isOnline; room.required = !isOnline;
+    if (isOnline) room.value = 'Online'; else if (room.value === 'Online') room.value = '';
+    url.disabled = !isOnline;
   }
+  function updateAllSlots() { list.querySelectorAll('.slot-row').forEach(updateSlot); }
   entry.addEventListener('change', swapEntry);
-  program.addEventListener('change', filterCourses); semester.addEventListener('change', filterCourses); search.addEventListener('input', filterCourses); mode.addEventListener('change', updateMode);
+  program.addEventListener('change', filterCourses); semester.addEventListener('change', filterCourses); search.addEventListener('input', filterCourses); list.addEventListener('change', (event) => { if (event.target.matches('.slot-mode')) updateSlot(event.target.closest('.slot-row')); });
   add.addEventListener('click', () => {
     if (list.children.length >= 4) { alert('Maksimal empat slot jadwal per minggu.'); return; }
     const row = list.firstElementChild.cloneNode(true);
     row.querySelectorAll('input').forEach((field) => field.value = '');
     row.querySelectorAll('select').forEach((field) => field.selectedIndex = 0);
     row.querySelector('.slot-remove').disabled = false;
-    list.appendChild(row); updateMode();
+    list.appendChild(row); updateSlot(row);
   });
   list.addEventListener('click', (event) => { const button = event.target.closest('.slot-remove'); if (button && list.children.length > 1) button.closest('.slot-row').remove(); });
-  swapEntry(); updateMode();
+  swapEntry(); updateAllSlots();
 })();
 </script>
 {% endblock %}
