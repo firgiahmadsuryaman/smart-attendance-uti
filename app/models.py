@@ -149,7 +149,7 @@ class ClassSchedule(db.Model):
     room = db.Column(db.String(60), nullable=False)
     # Moda disimpan per slot supaya satu penawaran dapat memiliki pertemuan
     # online dan tatap muka dalam minggu yang sama.
-    delivery_mode = db.Column(db.String(20), nullable=False, default="OFFLINE")
+    delivery_mode = db.Column(db.String(20), nullable=False, default="OFFLINE", server_default="OFFLINE")
     online_url = db.Column(db.String(500), nullable=True)
 
     offering = db.relationship("ClassOffering", back_populates="schedules")
