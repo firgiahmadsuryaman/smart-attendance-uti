@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% set page_description = "Kelola data resmi mata kuliah, jenis wajib/pilihan, SKS, program studi, dan semester rekomendasi." %}
 {% block content %}
-<div class="page-intro"><div><h2>Katalog Mata Kuliah</h2><p>Kelola data resmi mata kuliah, jenis wajib/pilihan, SKS, program studi, dan semester rekomendasi.</p></div><div class="page-intro-actions"><span class="status-pill info"><i class="bi bi-journal-bookmark me-1"></i>{{ courses|length }} mata kuliah ditampilkan</span></div></div>
+<div class="page-intro"><div class="page-intro-actions"><span class="status-pill info"><i class="bi bi-journal-bookmark me-1"></i>{{ courses|length }} mata kuliah ditampilkan</span></div></div>
 <div class="panel mb-4"><div class="panel-body">
   <form method="get" class="filter-toolbar"><div class="filter-fields">
     <input class="form-control" name="q" value="{{ search }}" placeholder="Cari kode atau nama mata kuliah..." aria-label="Cari mata kuliah">

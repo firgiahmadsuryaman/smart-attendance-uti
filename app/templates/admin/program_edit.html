@@ -1,3 +1,5 @@
-{% extends 'base.html' %}{% block content %}
-<div class="page-intro"><div><h2>Edit Program Studi</h2><p>Perbarui data program studi tanpa menghapus relasi akademik yang sudah ada.</p></div><a class="btn btn-light" href="{{ url_for('admin.programs') }}"><i class="bi bi-arrow-left me-1"></i>Kembali</a></div>
+{% extends 'base.html' %}
+{% set page_description = "Perbarui data program studi tanpa menghapus relasi akademik yang sudah ada." %}
+{% block content %}
+<div class="page-intro"><a class="btn btn-light" href="{{ url_for('admin.programs') }}"><i class="bi bi-arrow-left me-1"></i>Kembali</a></div>
 <div class="panel"><div class="panel-body form-panel" style="max-width:760px"><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="field-grid"><div><label class="form-label">Kode program</label><input class="form-control" name="code" value="{{ program.code }}" required></div><div><label class="form-label">Nama program studi</label><input class="form-control" name="name" value="{{ program.name }}" required></div><div class="full"><label class="form-label">Fakultas</label><input class="form-control" name="faculty" value="{{ program.faculty or '' }}"></div></div><button class="btn btn-primary mt-4">Simpan perubahan</button></form></div></div>{% endblock %}

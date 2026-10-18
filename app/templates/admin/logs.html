@@ -1,3 +1,4 @@
-{% extends 'base.html' %}{% block content %}
-<div class="page-intro"><div><h2>Log Aktivitas</h2><p>Riwayat tindakan penting untuk membantu audit, penelusuran perubahan, dan pemecahan masalah.</p></div></div>
+{% extends 'base.html' %}
+{% set page_description = "Riwayat tindakan penting untuk membantu audit, penelusuran perubahan, dan pemecahan masalah." %}
+{% block content %}
 <div class="panel"><div class="panel-header"><div><h3>Aktivitas terbaru</h3><p>Maksimal 300 aktivitas terakhir ditampilkan.</p></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Waktu</th><th>Pengguna</th><th>Aktivitas</th><th>Detail</th><th>Alamat IP</th></tr></thead><tbody>{% for item in entries %}<tr><td>{{ item.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</td><td>{{ item.actor.full_name if item.actor else 'Sistem' }}</td><td><span class="primary-text">{{ item.action|replace('_',' ')|title }}</span></td><td>{{ item.details or '-' }}</td><td>{{ item.ip_address or '-' }}</td></tr>{% else %}<tr><td colspan="5" class="text-center py-5 muted">Belum ada log.</td></tr>{% endfor %}</tbody></table></div></div>{% endblock %}
