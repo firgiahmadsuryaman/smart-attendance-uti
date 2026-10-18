@@ -56,13 +56,16 @@ def test_check_returns_requested_firgi_sample_identity(client):
     assert response.status_code == 200
     assert "Firgi Ahmad Suryaman" in body
     assert "Informatika" in body
+    assert "Fakultas Teknik dan Ilmu Komputer" in body
+    assert "7" in body
+    assert "2023" in body
 
 
 def test_registration_stores_requested_firgi_sample_identity(app, client):
     response = _register(
         client, "/register/student",
         jenis="mahasiswa", npm="23312237",
-        email="firgi.sample@example.test", password="uji-firgi-123",
+        email="firgi.sample@example.com", password="uji-firgi-123",
         password_confirm="uji-firgi-123",
     )
 
