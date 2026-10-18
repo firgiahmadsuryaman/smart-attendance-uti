@@ -271,8 +271,9 @@ dikonfirmasi. Pemetaan responsnya masih berdasarkan dugaan; lihat
 ### Perubahan skema setelah migrasi diaktifkan
 
 Database tidak lagi disiapkan dengan `init-db` untuk perubahan lanjutan. Repositori saat ini
-memiliki dua revisi migrasi: revisi dasar skema awal (`b3af04b5297f`) dan penambahan kolom
-identitas (`8f09cae67180`), sehingga instalasi baru dapat langsung memakai `flask db upgrade`.
+memiliki tiga revisi migrasi: skema dasar (`b3af04b5297f`), kolom identitas (`8f09cae67180`),
+dan moda serta tautan pada setiap slot jadwal (`d9c2b7e4a610`). Instalasi baru dapat memakai
+`flask db upgrade` untuk membuat skema terkini.
 Perintah di bawah mengasumsikan virtual environment sudah aktif. Setelah mengubah model:
 
 ```bash
