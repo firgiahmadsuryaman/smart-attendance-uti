@@ -12,9 +12,9 @@
  function updateRow(row) {
    const online=row.querySelector('.slot-mode').value==='ONLINE';
    const room=row.querySelector('.room-field input'), url=row.querySelector('.online-url-field input');
-   room.disabled=online; room.required=!online;
+   room.disabled=false; room.readOnly=online; room.required=!online;
    if(online) room.value='Online'; else if(room.value==='Online') room.value='';
-   url.disabled=!online;
+   url.disabled=false; url.closest('.online-url-field').classList.toggle('d-none',!online);
  }
  function updateAll(){list.querySelectorAll('.slot-row').forEach(updateRow);}
  add.addEventListener('click',()=>{
