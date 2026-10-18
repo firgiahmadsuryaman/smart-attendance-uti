@@ -52,3 +52,10 @@
 .identity-pane[hidden]{display:none}
 @media(max-width:600px){.identity-check-row{flex-direction:column}.identity-check-button{width:100%}.identity-tab{font-size:10px;padding:8px 6px}}
 
+
+/* Top-right logout stays visible on desktop and mobile without opening the sidebar. */
+.topbar-logout-form{margin:0;flex:0 0 auto}
+.topbar-logout{width:auto;min-width:36px;padding:0 10px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;white-space:nowrap}
+.topbar-logout span{font-size:11px;font-weight:700}
+.topbar-logout:hover{color:var(--blue);background:var(--pale)}
+@media(max-width:900px){.topbar-actions{gap:8px}.topbar-logout{width:36px;padding:0}.topbar-logout span{display:none}.topbar-profile{gap:0}}
