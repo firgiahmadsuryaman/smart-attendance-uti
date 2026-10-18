@@ -111,7 +111,7 @@ class ClassOffering(db.Model):
     class_code = db.Column(db.String(30), nullable=False)
     capacity = db.Column(db.Integer, nullable=False, default=40)
     status = db.Column(db.String(20), nullable=False, default="OPEN")  # OPEN / CLOSED
-    delivery_mode = db.Column(db.String(20), nullable=False, default="OFFLINE")  # OFFLINE / ONLINE
+    delivery_mode = db.Column(db.String(20), nullable=False, default="OFFLINE")  # OFFLINE / ONLINE / MIXED summary; each slot has its own mode
     online_url = db.Column(db.String(500), nullable=True)
     created_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
