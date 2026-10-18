@@ -61,10 +61,6 @@
     <div class="sidebar-bottom">
       <div class="sidebar-user-avatar">{{ current_user.full_name[:1]|upper }}</div>
       <div class="sidebar-user-copy"><strong>{{ current_user.full_name }}</strong><small>{{ current_user.role_label }}</small></div>
-      <form method="post" action="{{ url_for('auth.logout') }}" class="ms-auto">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button class="icon-button logout-button" type="submit" title="Keluar"><i class="bi bi-box-arrow-right"></i></button>
-      </form>
     </div>
   </aside>
 
@@ -75,6 +71,10 @@
       <div class="topbar-actions">
         {% if current_user.role == 'student' %}<a class="topbar-action" href="{{ url_for('student.notifications') }}" title="Notifikasi"><i class="bi bi-bell"></i></a>{% endif %}
         <div class="topbar-profile"><div class="profile-avatar">{{ current_user.full_name[:1]|upper }}</div><div class="profile-meta"><strong>{{ current_user.full_name }}</strong><small>{{ current_user.role_label }}</small></div></div>
+        <form method="post" action="{{ url_for('auth.logout') }}" class="topbar-logout-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="topbar-action topbar-logout" type="submit" title="Keluar dari akun" aria-label="Keluar dari akun"><i class="bi bi-box-arrow-right"></i><span>Keluar</span></button>
+        </form>
       </div>
     </header>
     <main class="page-content">
