@@ -129,6 +129,8 @@ class ClassOffering(db.Model):
 
     @property
     def delivery_mode_label(self):
+        if self.delivery_mode == "MIXED":
+            return "Campuran"
         return "Online" if self.delivery_mode == "ONLINE" else "Tatap Muka"
 
     @property
@@ -145,8 +147,16 @@ class ClassSchedule(db.Model):
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
     room = db.Column(db.String(60), nullable=False)
+    # Moda disimpan per slot supaya satu penawaran dapat memiliki pertemuan
+    # online dan tatap muka dalam minggu yang sama.
+    delivery_mode = db.Column(db.String(20), nullable=False, default="OFFLINE")
+    online_url = db.Column(db.String(500), nullable=True)
 
     offering = db.relationship("ClassOffering", back_populates="schedules")
+
+    @property
+    def delivery_mode_label(self):
+        return "Online" if self.delivery_mode == "ONLINE" else "Tatap muka"
 
     @property
     def weekday_name(self):
