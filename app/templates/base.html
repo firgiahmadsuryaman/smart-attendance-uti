@@ -71,10 +71,9 @@
   <div class="main-area">
     <header class="topbar">
       <button class="icon-button mobile-menu-button" id="sidebarToggle" type="button" aria-label="Buka navigasi"><i class="bi bi-list"></i></button>
-      <div class="topbar-title"><span class="eyebrow">UNIVERSITAS TEKNOKRAT INDONESIA</span><h1>{{ page_title or 'Dashboard' }}</h1></div>
+      <div class="topbar-title"><h1>{{ page_title or 'Dashboard' }}</h1>{% if page_description %}<span class="topbar-separator" aria-hidden="true"></span><p class="topbar-description" title="{{ page_description }}">{{ page_description }}</p>{% endif %}</div>
       <div class="topbar-actions">
         {% if current_user.role == 'student' %}<a class="topbar-action" href="{{ url_for('student.notifications') }}" title="Notifikasi"><i class="bi bi-bell"></i></a>{% endif %}
-        <div class="topbar-profile"><div class="profile-avatar">{{ current_user.full_name[:1]|upper }}</div><div class="profile-meta"><strong>{{ current_user.full_name }}</strong><small>{{ current_user.role_label }}</small></div></div>
       </div>
     </header>
     <main class="page-content">

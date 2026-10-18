@@ -1,11 +1,7 @@
 {% extends 'base.html' %}
+{% set page_description = "Cari penawaran kelas sesuai program studi dan semester yang dibutuhkan. Jadwal resmi akan muncul setelah pengambilan kelas disetujui." %}
 {% block content %}
 <div class="page-intro">
-  <div>
-    <span class="eyebrow">PORTAL AKADEMIK</span>
-    <h2>Mata Kuliah Saya</h2>
-    <p>Cari penawaran kelas sesuai program studi dan semester yang dibutuhkan. Jadwal resmi akan muncul setelah pengambilan kelas disetujui.</p>
-  </div>
   <div class="page-intro-actions">
     {% if active_semester %}<span class="status-pill info"><i class="bi bi-calendar3"></i> {{ active_semester.name }}</span>{% endif %}
     <a class="btn btn-outline-primary" href="{{ url_for('student.schedule') }}"><i class="bi bi-calendar-week me-1"></i>Jadwal Saya</a>

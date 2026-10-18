@@ -1,3 +1,4 @@
-{% extends 'base.html' %}{% block content %}
-<div class="page-intro"><div><h2>Notifikasi</h2><p>Informasi pengajuan mata kuliah dan aktivitas presensi Anda.</p></div></div>
+{% extends 'base.html' %}
+{% set page_description = "Informasi pengajuan mata kuliah dan aktivitas presensi Anda." %}
+{% block content %}
 <div class="panel"><div class="panel-body">{% for item in notifications %}<div class="mini-card"><span class="mini-icon"><i class="bi bi-bell"></i></span><div class="mini-copy"><strong>{{ item.title }}</strong><small>{{ item.message }}</small></div><div class="mini-end">{{ item.created_at.strftime('%d/%m/%Y') }}<br>{{ item.created_at.strftime('%H:%M') }}</div></div>{% else %}<div class="empty-state py-5 border-0"><div class="empty-icon"><i class="bi bi-bell-slash"></i></div><h2>Belum ada notifikasi</h2><p>Notifikasi akan muncul ketika ada pembaruan penting pada akun Anda.</p></div>{% endfor %}</div></div>{% endblock %}

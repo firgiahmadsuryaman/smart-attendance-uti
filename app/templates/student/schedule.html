@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
+{% set page_description = "Jadwal terbentuk otomatis dari kelas yang disetujui. Jika Admin atau dosen memperbarui slot jadwal, halaman ini mengikuti data terbaru." %}
 {% block content %}
 <div class="page-intro">
-  <div><span class="eyebrow">AKADEMIK · SEMESTER AKTIF</span><h2>Jadwal Mata Kuliah</h2><p>Jadwal terbentuk otomatis dari kelas yang disetujui. Jika Admin atau dosen memperbarui slot jadwal, halaman ini mengikuti data terbaru.</p></div>
   <div class="page-intro-actions"><a class="btn btn-outline-primary" href="{{ url_for('student.download_schedule_pdf') }}"><i class="bi bi-file-earmark-pdf me-1"></i>Unduh PDF</a><a class="btn btn-primary" href="{{ url_for('student.download_schedule_xlsx') }}"><i class="bi bi-file-earmark-excel me-1"></i>Unduh Excel</a></div>
 </div>
 

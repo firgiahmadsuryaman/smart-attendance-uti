@@ -1,5 +1,7 @@
-{% extends 'base.html' %}{% block content %}
-<div class="page-intro"><div><h2>Pendaftaran Wajah</h2><p>Pendaftaran dilakukan sekali setelah login. Kamera merekam secara langsung dan mengambil sampel otomatis saat Anda melihat ke depan, berkedip, lalu menoleh kiri dan kanan.</p></div><div class="page-intro-actions"><span class="status-pill {{ 'success' if face_profile else 'warning' }}">{{ 'Terdaftar' if face_profile else 'Belum terdaftar' }}</span></div></div>
+{% extends 'base.html' %}
+{% set page_description = "Pendaftaran dilakukan sekali setelah login. Kamera merekam secara langsung dan mengambil sampel otomatis saat Anda melihat ke depan, berkedip, lalu menoleh kiri dan kanan." %}
+{% block content %}
+<div class="page-intro"><div class="page-intro-actions"><span class="status-pill {{ 'success' if face_profile else 'warning' }}">{{ 'Terdaftar' if face_profile else 'Belum terdaftar' }}</span></div></div>
 <div class="content-grid"><section class="panel"><div class="panel-header"><div><h3>Verifikasi kamera</h3><p>Gunakan wajah sendiri, pencahayaan cukup, dan pastikan hanya satu wajah berada di bingkai.</p></div></div><div class="panel-body">
   <div class="camera-card"><video id="cameraVideo" class="d-none" autoplay playsinline muted></video><div class="camera-overlay"><div class="face-guide"></div></div><div class="camera-placeholder" id="cameraPlaceholder"><i class="bi bi-camera-video"></i><p>Kamera belum diaktifkan</p></div></div>
   <div class="attendance-challenge mt-3"><strong id="cameraChallengeTitle">Langkah 1 dari 4 · Hadap ke depan</strong><div id="cameraChallengeText">Aktifkan kamera sekali, lalu ikuti instruksi. Sampel direkam otomatis; tidak perlu menekan tombol foto berkali-kali.</div></div>
